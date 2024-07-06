@@ -39,17 +39,32 @@ def remove_pins(items: List[str]) -> int:
 def clear_pins():
     save_pinned_items([])
 
+def is_valid_file(file_path: str) -> bool:
+    ignored_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.ico', '.svg',
+                          '.mp3', '.wav', '.ogg', '.mp4', '.avi', '.mov', '.wmv',
+                          '.zip', '.tar', '.gz', '.rar', '.7z',
+                          '.exe', '.dll', '.so', '.dylib',
+                          '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'}
+    
+    return (not os.path.basename(file_path).startswith('.') and
+            os.path.splitext(file_path)[1].lower() not in ignored_extensions)
+
 def get_all_files_in_directory(directory: str) -> Set[str]:
     all_files = set()
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
+        # Ignore hidden directories
+        dirs[:] = [d for d in dirs if not d.startswith('.')]
+        
         for file in files:
-            all_files.add(os.path.abspath(os.path.join(root, file)))
+            file_path = os.path.abspath(os.path.join(root, file))
+            if is_valid_file(file_path):
+                all_files.add(file_path)
     return all_files
 
 def get_unique_files(pinned_items: List[str]) -> Set[str]:
     unique_files = set()
     for item in pinned_items:
-        if os.path.isfile(item):
+        if os.path.isfile(item) and is_valid_file(item):
             unique_files.add(os.path.abspath(item))
         elif os.path.isdir(item):
             unique_files.update(get_all_files_in_directory(item))
@@ -61,7 +76,7 @@ def copy_pinboard():
     content = ["Table of contents"]
 
     for item in pinned_items:
-        if os.path.isfile(item):
+        if os.path.isfile(item) and is_valid_file(item):
             content.append(f"- {os.path.relpath(item)}")
         elif os.path.isdir(item):
             content.append(f"- {os.path.relpath(item)}/ (Directory)")

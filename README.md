@@ -1,33 +1,54 @@
 # Pinboard
 
-Pinboard is a command-line tool for managing file references when working with raw language models. It's meant to streamline development workflows, allowing users to request contextual, in-place file updates efficiently.
+Pinboard is a command-line tool for managing file references when working with raw language models. It's meant to streamline codebase-level development workflows, allowing users to request contextual, in-place file updates efficiently.
 
 ## Usage
 
 ```bash
-$ pin add file1.txt folder1/
-Added 2 new item(s) to the pinboard.
+$ pin add README.md src/pinboard pyproject.toml
+Added 3 new item(s) to the pinboard.
 
-$ pin rm file1.txt
+$ pin rm pyproject.toml
 Removed 1 item(s) from the pinboard.
 
 $ pin ls
 Pinned items:
-- [Directory] /path/to/folder1/
+- [File] /path/to/README.md
+- [Directory] /path/to/src/pinboard
 
-$ pin cp # Aggregate files as a unified string for prompting.
+# Format files as a unified string for external prompting.
+$ pin cp
 Pinboard contents copied to clipboard.
 
 $ pin llm anthropic/claude-3-5-sonnet-20240620
 LLM set to anthropic/claude-3-5-sonnet-20240620.
 
-$ pin edit "add installation instructions in readme"
+# File edit happens in-place, new version shows up in your editor directly.
+$ pin edit "add setup instructions in readme"
 Querying claude-3-5-sonnet-20240620 for edits...
 Updated file: /path/to/README.md
 
-$ pin edit --with-clipboard "add docstrings to the selected function"
+# Clipboard content gets included in unified string.
+$ pin edit --with-clipboard "add docstring to selected function"
 Querying claude-3-5-sonnet-20240620 for edits...
-Updated file: /path/to/source.py
+Updated file: /path/to/src/pinboard/llm.py
+
+# New files get automatically pinned.
+$ pin edit "create a minimal contributing md and reference it in the readme"
+Querying claude-3-5-sonnet-20240620 for edits...
+Updated file: /path/to/README.md
+Added new file: /path/to/CONTRIBUTING.md
+
+$ pin ls
+Pinned items:
+- [File] /path/to/README.md
+- [Directory] /path/to/src/pinboard
+- [File] /path/to/CONTRIBUTING.md
+
+# Ask questions about the pinned files
+$ pin ask "Where is the 'ask' command implemented?"
+Querying claude-3-5-sonnet-20240620 for an answer...
+The 'ask' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'ask' that takes a message parameter and calls the ask_question function from the llm module.
 
 $ pin clear
 Pinboard cleared.
@@ -53,6 +74,9 @@ Pinboard cleared.
    $ export ANTHROPIC_API_KEY=your_api_key_here
    ```
 
+## Contributing
+
+We welcome contributions to Pinboard! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information on how to get started.
 
 ## License
 

@@ -3,7 +3,7 @@ import json
 from anthropic import Anthropic
 import typer
 from .config import get_llm_config
-from .file_operations import get_pinned_items, update_file, add_new_file, get_all_files_in_directory
+from .file_operations import get_pinned_items, update_file, add_new_file, get_all_files_in_directory, is_valid_file
 from .utils import get_file_content, parse_llm_response
 
 def get_llm_client():
@@ -11,7 +11,7 @@ def get_llm_client():
 
 def get_all_pinned_files():
     pinned_items = get_pinned_items()
-    return [item for item in pinned_items if os.path.isfile(item)] + \
+    return [item for item in pinned_items if os.path.isfile(item) and is_valid_file(item)] + \
            [file for item in pinned_items if os.path.isdir(item) 
             for file in get_all_files_in_directory(item)]
 
@@ -64,3 +64,27 @@ def edit_files(message: str):
 
 def inline_edit(message: str, clipboard_content: str):
     process_edit(message, clipboard_content)
+
+def ask_question(message: str):
+    client = get_llm_client()
+    config = get_llm_config()
+    all_files = get_all_pinned_files()
+
+    system_prompt = ("You are an AI assistant that answers questions about files. "
+                     "Provide a concise and informative response based on the file contents.")
+
+    human_prompt = "Current files:\n\n"
+    for file in all_files:
+        human_prompt += f"<artifact identifier=\"{file}\">\n{get_file_content(file)}\n</artifact>\n\n"
+
+    human_prompt += f"Question: {message}"
+
+    typer.echo(f"Querying {config['model']} for an answer...")
+    response = client.messages.create(
+        model=config["model"],
+        max_tokens=1000,
+        system=system_prompt,
+        messages=[{"role": "user", "content": human_prompt}]
+    )
+
+    return response.content[0].text if response.content else "No response received from the LLM."

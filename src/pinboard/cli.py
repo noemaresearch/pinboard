@@ -3,7 +3,7 @@ import os
 from typing import List
 from .file_operations import add_pins, clear_pins, copy_pinboard, get_pinned_items, remove_pins
 from .config import set_llm_config
-from .llm import edit_files, inline_edit
+from .llm import edit_files, inline_edit, ask_question
 from .utils import get_clipboard_content
 
 app = typer.Typer()
@@ -52,6 +52,12 @@ def edit(message: str, with_clipboard: bool = typer.Option(False, "--with-clipbo
         inline_edit(message, clipboard_content)
     else:
         edit_files(message)
+
+@app.command()
+def ask(message: str):
+    """Ask a question about the pinned files and get a response from the LLM."""
+    response = ask_question(message)
+    typer.echo(response)
 
 @app.command()
 def ls():
