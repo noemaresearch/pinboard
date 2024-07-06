@@ -45,7 +45,7 @@ def llm(model: str):
     typer.echo(f"LLM set to {model}.")
 
 @app.command()
-def edit(message: str, with_clipboard: bool = typer.Option(False, "--with-clipboard", help="Edit using clipboard content")):
+def edit(message: str, with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Edit using clipboard content")):
     """Edit pinned files using the configured LLM."""
     if with_clipboard:
         clipboard_content = get_clipboard_content()
@@ -54,9 +54,13 @@ def edit(message: str, with_clipboard: bool = typer.Option(False, "--with-clipbo
         edit_files(message)
 
 @app.command()
-def ask(message: str):
+def ask(message: str, with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Ask using clipboard content")):
     """Ask a question about the pinned files and get a response from the LLM."""
-    response = ask_question(message)
+    if with_clipboard:
+        clipboard_content = get_clipboard_content()
+        response = ask_question(message, clipboard_content)
+    else:
+        response = ask_question(message)
     typer.echo(response)
 
 @app.command()

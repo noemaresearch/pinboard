@@ -65,7 +65,7 @@ def edit_files(message: str):
 def inline_edit(message: str, clipboard_content: str):
     process_edit(message, clipboard_content)
 
-def ask_question(message: str):
+def ask_question(message: str, clipboard_content: str = None):
     client = get_llm_client()
     config = get_llm_config()
     all_files = get_all_pinned_files()
@@ -76,6 +76,9 @@ def ask_question(message: str):
     human_prompt = "Current files:\n\n"
     for file in all_files:
         human_prompt += f"<artifact identifier=\"{file}\">\n{get_file_content(file)}\n</artifact>\n\n"
+
+    if clipboard_content:
+        human_prompt += f"Clipboard content:\n{clipboard_content}\n\n"
 
     human_prompt += f"Question: {message}"
 

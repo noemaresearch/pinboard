@@ -23,29 +23,30 @@ Pinboard contents copied to clipboard.
 $ pin llm anthropic/claude-3-5-sonnet-20240620
 LLM set to anthropic/claude-3-5-sonnet-20240620.
 
-# File edit happens in-place, new version shows up in your editor directly.
+# File editing happens in-place, new version should just show up in your editor.
 $ pin edit "add setup instructions in readme"
 Querying claude-3-5-sonnet-20240620 for edits...
 Updated file: /path/to/README.md
 
-# Clipboard content gets included in unified string.
-$ pin edit --with-clipboard "add docstring to selected function"
+# Clipboard content can also be included in the unified string.
+$ pin edit -clip "add docstring to selected function"
 Querying claude-3-5-sonnet-20240620 for edits...
 Updated file: /path/to/src/pinboard/llm.py
 
-# New files get automatically pinned.
+# Editing can also yield new files.
 $ pin edit "create a minimal contributing md and reference it in the readme"
 Querying claude-3-5-sonnet-20240620 for edits...
 Updated file: /path/to/README.md
 Added new file: /path/to/CONTRIBUTING.md
 
+# New files get automatically pinned.
 $ pin ls
 Pinned items:
 - [File] /path/to/README.md
 - [Directory] /path/to/src/pinboard
 - [File] /path/to/CONTRIBUTING.md
 
-# Ask questions about the pinned files
+# Ask questions about pinned files.
 $ pin ask "Where is the 'ask' command implemented?"
 Querying claude-3-5-sonnet-20240620 for an answer...
 The 'ask' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'ask' that takes a message parameter and calls the ask_question function from the llm module.
