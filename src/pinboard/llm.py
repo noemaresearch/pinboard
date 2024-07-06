@@ -37,7 +37,7 @@ def process_edit(message: str, clipboard_content: str = None):
 
     human_prompt += f"Make the following edits: {message}"
 
-    typer.echo("Edits in progress...")
+    typer.echo(f"Querying {config['model']} for edits...")
     response = client.messages.create(
         model=config["model"],
         max_tokens=3000,

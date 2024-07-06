@@ -33,7 +33,7 @@ def clear():
     typer.echo("Pinboard cleared.")
 
 @app.command()
-def copy():
+def cp():
     """Copy the contents of the pinboard to the clipboard."""
     copy_pinboard()
     typer.echo("Pinboard contents copied to clipboard.")
@@ -42,18 +42,16 @@ def copy():
 def llm(model: str):
     """Configure the LLM to use for editing files."""
     set_llm_config(model)
-    typer.echo(f"LLM configured to use {model}.")
+    typer.echo(f"LLM set to {model}.")
 
 @app.command()
-def edit(message: str):
+def edit(message: str, with_clipboard: bool = typer.Option(False, "--with-clipboard", help="Edit using clipboard content")):
     """Edit pinned files using the configured LLM."""
-    edit_files(message)
-
-@app.command()
-def inline(message: str):
-    """Edit pinned files and clipboard content using the configured LLM."""
-    clipboard_content = get_clipboard_content()
-    inline_edit(message, clipboard_content)
+    if with_clipboard:
+        clipboard_content = get_clipboard_content()
+        inline_edit(message, clipboard_content)
+    else:
+        edit_files(message)
 
 @app.command()
 def ls():
