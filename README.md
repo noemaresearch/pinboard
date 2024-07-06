@@ -79,6 +79,15 @@ Pinboard cleared.
 
 We welcome contributions to Pinboard! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information on how to get started.
 
+## Roadmap
+
+1. Editing loops that allow for iterative editing based on a fixed command being executed (e.g. `docker build ...`, `pytest ...`) and its output getting fed back in.
+
+2. `diff` view for a more granular accept/reject flow instead of just in-place edits, providing users with more control over LLM suggestions.
+
+3. Support for more LLM vendors beyond just Anthropic.
+
+
 ## License
 
 Apache 2.0 License
