@@ -1,6 +1,7 @@
 # Pinboard
 
-Pinboard is a command-line tool for managing file references when working with raw language models. It's meant to streamline codebase-level development workflows, allowing users to request contextual, in-place file updates efficiently.
+Almost all of this codebase has been produced by issuing high-level directives against pinned files. Pinboard is a command-line tool for managing file references when working with raw language models. It's meant to streamline codebase-level development workflows, allowing users to request contextual, in-place file updates efficiently.
+
 
 ## Usage
 
@@ -49,7 +50,7 @@ Pinned items:
 # Ask questions about pinned files.
 $ pin ask "Where is the 'ask' command implemented?"
 Querying claude-3-5-sonnet-20240620 for an answer...
-The 'ask' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'ask' that takes a message parameter and calls the ask_question function from the llm module.
+"The 'ask' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'ask' that takes a message parameter and calls the ask_question function from the llm module."
 
 $ pin clear
 Pinboard cleared.
