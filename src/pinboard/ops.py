@@ -3,6 +3,7 @@ import json
 import pyclip
 from typing import List, Set
 from platformdirs import user_data_dir
+import subprocess
 
 DATA_DIR = user_data_dir("pinboard")
 PINBOARD_FILE = os.path.join(DATA_DIR, "pinboard.json")
@@ -64,7 +65,9 @@ def get_all_files_in_directory(directory: str) -> Set[str]:
 def get_unique_files(pinned_items: List[str]) -> Set[str]:
     unique_files = set()
     for item in pinned_items:
-        if os.path.isfile(item) and is_valid_file(item):
+        if item.startswith("term:"):
+            continue
+        elif os.path.isfile(item) and is_valid_file(item):
             unique_files.add(os.path.abspath(item))
         elif os.path.isdir(item):
             unique_files.update(get_all_files_in_directory(item))
@@ -76,7 +79,9 @@ def copy_pinboard():
     content = ["Table of contents"]
 
     for item in pinned_items:
-        if os.path.isfile(item) and is_valid_file(item):
+        if item.startswith("term:"):
+            content.append(f"- {item[5:]} (Term)")
+        elif os.path.isfile(item) and is_valid_file(item):
             content.append(f"- {os.path.relpath(item)}")
         elif os.path.isdir(item):
             content.append(f"- {os.path.relpath(item)}/ (Directory)")
@@ -98,6 +103,15 @@ def copy_pinboard():
         content.append("```")
         content.append("")
 
+    for item in pinned_items:
+        if item.startswith("term:"):
+            session_name = item[5:]
+            content.append(f"# Term: {session_name}")
+            content.append("```")
+            content.append(get_term_content(session_name))
+            content.append("```")
+            content.append("")
+
     pyclip.copy("\n".join(content))
 
 def update_file(file_path: str, new_content: str):
@@ -108,3 +122,28 @@ def add_new_file(file_path: str, content: str):
     with open(file_path, "w") as f:
         f.write(content)
     add_pins([file_path])
+    
+def add_term(sessions: List[str]) -> int:
+    existing_pins = set(get_pinned_items())
+    new_pins = set(f"term:{session}" for session in sessions)
+    updated_pins = list(existing_pins.union(new_pins))
+    save_pinned_items(updated_pins)
+    return len(updated_pins) - len(existing_pins)
+
+def remove_term(sessions: List[str]) -> int:
+    existing_pins = set(get_pinned_items())
+    items_to_remove = set(f"term:{session}" for session in sessions)
+    updated_pins = list(existing_pins - items_to_remove)
+    save_pinned_items(updated_pins)
+    return len(existing_pins) - len(updated_pins)
+
+def get_term_content(session_name: str) -> str:
+    try:
+        output = subprocess.check_output(
+            ["tmux", "capture-pane", "-p", "-t", session_name],
+            stderr=subprocess.STDOUT,
+            universal_newlines=True
+        )
+        return output.strip()
+    except subprocess.CalledProcessError as e:
+        return f"Error capturing term content: {e.output}"

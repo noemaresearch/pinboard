@@ -1,10 +1,11 @@
 import typer
 import os
 from typing import List
-from .file_operations import add_pins, clear_pins, copy_pinboard, get_pinned_items, remove_pins
+from .ops import add_pins, clear_pins, copy_pinboard, get_pinned_items, remove_pins
 from .config import set_llm_config
 from .llm import edit_files, inline_edit, ask_question
 from .utils import get_clipboard_content
+from .ops import add_term, remove_term
 
 app = typer.Typer()
 
@@ -18,9 +19,18 @@ def add(items: List[str] = typer.Argument(..., help="File or folder paths to add
         typer.echo(f"Added {added_count} new item(s) to the pinboard.")
 
 @app.command()
-def rm(items: List[str] = typer.Argument(..., help="File or folder paths to remove from the pinboard")):
-    """Remove file or folder paths from the pinboard."""
-    removed_count = remove_pins(items)
+def term(sessions: List[str] = typer.Argument(..., help="Term names to add to the pinboard")):
+    """Add terms to the pinboard."""
+    added_count = add_term(sessions)
+    if added_count == 0:
+        typer.echo("No new terms added to the pinboard.")
+    else:
+        typer.echo(f"Added {added_count} new term(s) to the pinboard.")
+
+@app.command()
+def rm(items: List[str] = typer.Argument(..., help="File, folder paths, or term names to remove from the pinboard")):
+    """Remove file, folder paths, or term names from the pinboard."""
+    removed_count = remove_pins(items) + remove_term(items)
     if removed_count == 0:
         typer.echo("No items were removed from the pinboard.")
     else:
@@ -65,15 +75,19 @@ def ask(message: str, with_clipboard: bool = typer.Option(False, "--with-clipboa
 
 @app.command()
 def ls():
-    """List all pinned files and folders."""
+    """List all pinned files, folders, and terms."""
     pinned_items = get_pinned_items()
     if pinned_items:
         typer.echo("Pinned items:")
         for item in pinned_items:
-            item_type = "Directory" if os.path.isdir(item) else "File"
-            typer.echo(f"- [{item_type}] {item}")
+            if item.startswith("term:"):
+                typer.echo(f"- [Term] {item[5:]}")
+            elif os.path.isdir(item):
+                typer.echo(f"- [Directory] {item}")
+            else:
+                typer.echo(f"- [File] {item}")
     else:
-        typer.echo("No items are currently pinned.")
+        typer.echo("The pinboard is currently empty.")
 
 if __name__ == "__main__":
     app()

@@ -9,13 +9,19 @@ Almost all of this codebase has been produced by issuing high-level directives a
 $ pin add README.md src/pinboard pyproject.toml
 Added 3 new item(s) to the pinboard.
 
-$ pin rm pyproject.toml
-Removed 1 item(s) from the pinboard.
+# Add a tmux session to the pinboard.
+$ pin term my-session
+Added 1 new term(s) to the pinboard.
 
 $ pin ls
 Pinned items:
 - [File] /path/to/README.md
 - [Directory] /path/to/src/pinboard
+- [Term] my-session
+
+# Remove some items
+$ pin rm my-session pyproject.toml
+Removed 2 item(s) from the pinboard.
 
 # Format files as a unified string for external prompting.
 $ pin cp

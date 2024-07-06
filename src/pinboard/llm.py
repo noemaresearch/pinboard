@@ -3,7 +3,7 @@ import json
 from anthropic import Anthropic
 import typer
 from .config import get_llm_config
-from .file_operations import get_pinned_items, update_file, add_new_file, get_all_files_in_directory, is_valid_file
+from .ops import get_pinned_items, update_file, add_new_file, get_all_files_in_directory, is_valid_file
 from .utils import get_file_content, parse_llm_response
 
 def get_llm_client():
