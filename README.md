@@ -5,7 +5,7 @@ Almost all of this codebase has been produced by issuing high-level directives a
 
 ## Usage
 
-```bash
+```
 $ pin add README.md src/pinboard pyproject.toml
 Added 3 new item(s) to the pinboard.
 
