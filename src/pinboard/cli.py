@@ -2,6 +2,7 @@ import typer
 import os
 from typing import List
 from rich import print
+from rich.panel import Panel
 from rich.table import Table
 from rich.console import Console
 from .pin import add_pins, clear_pins, get_pinned_items, remove_pins
@@ -86,7 +87,7 @@ def process_chat_message(message: str, clipboard_content: str = None):
     response = llm_chat(message, clipboard_content)
     
     if "<artifact" not in response:
-        print(Panel(response, title="Response", expand=False))
+            print(Panel(response, title="Response", title_align="left", expand=False, style="green"))
 
 @app.command()
 def ls():

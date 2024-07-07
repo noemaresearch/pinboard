@@ -7,7 +7,7 @@ from .config import get_llm_config
 from .file import update_file, add_new_file, get_all_files_in_directory, is_valid_file, remove_file
 from .pin import get_pinned_items, remove_pins
 from .term import get_term_content
-from .utils import get_file_content, parse_llm_response
+from .utils import get_file_content, get_numbered_file_content, parse_llm_response, apply_edits
 from .format import print_file_change, print_info
 
 console = Console()
@@ -27,23 +27,24 @@ def chat(message: str, clipboard_content: str = None):
     all_files = get_all_pinned_files()
 
     system_prompt = ("You are an AI assistant that can answer questions about files and edit them. "
-                     "If the user asks for any kinds of changes, respond with the full content of each edited file using <artifact> tags. "
+                     "If the user asks for any kinds of changes, respond with the edited content using <artifactEdit> tags. "
                      "If the user instead asks a question, provide a concise and informative response. "
                      "Follow these rules strictly:\n"
-                     "1. For edits, provide the complete file content for each edited file, not just the changes.\n"
-                     "2. Surround new, updated, or removed files with <artifact> and </artifact> tags placed at the beginning of their respective lines.\n"
-                     "3. Use correct, absolute file paths as artifact tag identifiers.\n"
-                     "4. Do not include any explanations or comments outside the artifact tags for edits.\n"
-                     "5. Ensure there is no content before the first <artifact> tag or after the last </artifact> tag for edits.\n"
-                     "6. To remove a file, provide an empty content within the artifact tags.\n"
+                     "1. For edits, use <artifactEdit> tags with 'identifier', 'from', and 'to' attributes.\n"
+                     "2. The 'from' attribute is inclusive, and the 'to' attribute is exclusive.\n"
+                     "3. For new files, use <artifactEdit> tags with only the 'identifier' attribute.\n"
+                     "4. Use correct, absolute file paths as identifiers.\n"
+                     "5. Provide only the changed content within the <artifactEdit> tags.\n"
+                     "6. To remove lines, provide an empty content within the <artifactEdit> tags.\n"
                      "7. When creating new files or modifying existing ones, update import statements in all affected files to maintain consistency.\n"
                      "8. Proactively identify and update any files that may be impacted by changes in module structure or file organization.\n"
                      "9. Pinned term objects (starting with 'term:') are read-only. You can only update, add, or remove files.\n"
-                     "10. For questions, provide a direct answer without using artifact tags.")
+                     "10. For questions, provide a direct answer without using <artifactEdit> tags.\n"
+                     "11. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will be directly injected at the specified locations, so maintaining correct indentation is crucial.")
 
     human_prompt = "Current files:\n\n"
     for file in all_files:
-        human_prompt += f"<artifact identifier=\"{file}\">\n{get_file_content(file)}\n</artifact>\n\n"
+        human_prompt += f"<artifact identifier=\"{file}\">\n{get_numbered_file_content(file)}\n</artifact>\n\n"
 
     pinned_items = get_pinned_items()
     for item in pinned_items:
@@ -65,20 +66,22 @@ def chat(message: str, clipboard_content: str = None):
 
     content = response.content[0].text if response.content else ""
     
-    if "<artifact" in content:
+    if "<artifactEdit" in content:
         edited_files = parse_llm_response(content)
-        for file_path, file_content in edited_files.items():
+        for file_path, edits in edited_files.items():
             if file_path.startswith("term:"):
                 print_info(f"Skipping read-only term object: {file_path}")
-            elif file_path in all_files:
-                if file_content.strip() == "":
+            elif isinstance(edits, list):
+                file_content = get_file_content(file_path)
+                updated_content = apply_edits(file_content, edits)
+                if updated_content.strip() == "":
                     remove_file(file_path)
                     print_file_change("Removed", file_path)
                 else:
-                    update_file(file_path, file_content)
+                    update_file(file_path, updated_content)
                     print_file_change("Updated", file_path)
-            else:
-                add_new_file(file_path, file_content)
+            elif isinstance(edits, str):  # New file
+                add_new_file(file_path, edits)
                 print_file_change("Added", file_path)
         
         if not edited_files:
