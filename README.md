@@ -12,6 +12,10 @@ Pinboard is a command-line tool for managing file references when working with r
 
 ![](/media/tmux.png)
 
+### Multifile
+
+![](/media/multifile.png)
+
 ### Interactive
 
 ![](/media/interactive.png)
