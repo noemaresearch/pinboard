@@ -58,7 +58,7 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
                      "11. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will be directly injected at the specified locations, so maintaining correct indentation is crucial.\n"
                      "12. If you intend to make multiple edits to the same artifact, rewrite the entire artifact with all changes included as one big edit.\n")
 
-    human_prompt = "Current pinned items:\n\n"
+    human_prompt = "Workspace overview. Current pinned items:\n\n"
     for file in all_files:
         human_prompt += f"<artifact identifier=\"{file}\">\n{get_numbered_file_content(file)}\n</artifact>\n\n"
 

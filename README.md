@@ -6,114 +6,67 @@ Pinboard is a command-line tool for managing file references when working with r
 
 ```
 $ pin add README.md src/pinboard pyproject.toml
-╭─ Success ────────────────────────────╮
-│ Added 3 new item(s) to the pinboard. │
-╰──────────────────────────────────────╯
+Added 3 new item(s) to the pinboard.
 
 # Add a tmux session to the pinboard.
 $ pin term my-session
-╭─ Success ────────────────────────────╮
-│ Added 1 new term(s) to the pinboard. │
-╰──────────────────────────────────────╯
+Added 1 new term(s) to the pinboard.
 
 $ pin ls
-                     Pinned Items (4 total)
-┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Type      ┃ Item                                              ┃
-┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ File      │ /path/to/README.md                                │
-│ Directory │ /path/to/src/pinboard                             │
-│ File      │ /path/to/pyproject.toml                           │
-│ Term      │ my-session                                        │
-└───────────┴───────────────────────────────────────────────────┘
+Pinned Items (4 total):
+- File: /path/to/README.md
+- Directory: /path/to/src/pinboard
+- File: /path/to/pyproject.toml
+- Term: my-session
 
 # Remove some items.
 $ pin rm my-session pyproject.toml
-╭─ Success ────────────────────────────╮
-│ Removed 2 item(s) from the pinboard. │
-╰──────────────────────────────────────╯
+Removed 2 item(s) from the pinboard.
 
 # Format files as a unified string for external prompting.
 $ pin cp
-╭─ Success ─────────────────────────────────╮
-│ Pinboard contents copied to clipboard.    │
-╰───────────────────────────────────────────╯
+Pinboard contents copied to clipboard.
 
 $ pin llm anthropic/claude-3-5-sonnet-20240620
-╭─ Success ────────────────────────────────────────────────────╮
-│ LLM set to anthropic/claude-3-5-sonnet-20240620.             │
-╰──────────────────────────────────────────────────────────────╯
+LLM set to anthropic/claude-3-5-sonnet-20240620.
 
 # File editing and asking questions happen through the chat command.
 $ pin chat "add setup instructions in readme"
-╭─ Info ────────────────────────────────────────────╮
-│ Querying language model for a response...         │
-╰───────────────────────────────────────────────────╯
-╭─ Info ────────────────────────────────────────────╮
-│ Updated file: /path/to/README.md                  │
-╰───────────────────────────────────────────────────╯
+Querying language model for a response...
+Updated file: /path/to/README.md
 
 # Clipboard content can also be included in the unified string.
 $ pin chat -clip "add docstring to selected function"
-╭─ Info ────────────────────────────────────────────╮
-│ Querying language model for a response...         │
-╰───────────────────────────────────────────────────╯
-╭─ Info ────────────────────────────────────────────╮
-│ Updated file: /path/to/src/pinboard/llm.py        │
-╰───────────────────────────────────────────────────╯
+Querying language model for a response...
+Updated file: /path/to/src/pinboard/llm.py
 
 # Editing can also yield new files.
 $ pin chat "create a minimal contributing md and reference it in the readme"
-╭─ Info ────────────────────────────────────────────╮
-│ Querying language model for a response...         │
-╰───────────────────────────────────────────────────╯
-╭─ Info ────────────────────────────────────────────╮
-│ Updated file: /path/to/README.md                  │
-╰───────────────────────────────────────────────────╯
-╭─ Success ─────────────────────────────────────────╮
-│ Added file: /path/to/CONTRIBUTING.md              │
-╰───────────────────────────────────────────────────╯
+Querying language model for a response...
+Updated file: /path/to/README.md
+Added file: /path/to/CONTRIBUTING.md
 
 # New files get automatically pinned.
 $ pin ls
-                     Pinned Items (3 total)
-┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Type      ┃ Item                                              ┃
-┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ File      │ /path/to/README.md                                │
-│ Directory │ /path/to/src/pinboard                             │
-│ File      │ /path/to/CONTRIBUTING.md                          │
-└───────────┴───────────────────────────────────────────────────┘
+Pinned Items (3 total):
+- File: /path/to/README.md
+- Directory: /path/to/src/pinboard
+- File: /path/to/CONTRIBUTING.md
 
 # Ask questions about pinned files.
 $ pin chat "where is the 'chat' command implemented?"
-╭─ Info ────────────────────────────────────────────╮
-│ Querying language model for a response...         │
-╰───────────────────────────────────────────────────╯
-╭─ Response ────────────────────────────────────────────────────────╮
-│                                                                   │
-│ The 'chat' command is implemented in the file                     │
-│ /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer    │
-│ command function named 'chat' that takes optional parameters for  │
-│ the message, including clipboard content, and an interactive mode │
-│ flag.                                                             │
-╰───────────────────────────────────────────────────────────────────╯
+Querying language model for a response...
+The 'chat' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'chat' that takes optional parameters for the message, including clipboard content, and an interactive mode flag.
 
 # Interactive chat mode.
 $ pin chat -i
-╭─ Info ──────────────────────────────────────────────────────────────╮
-│ Starting interactive chat session. Type 'exit' to end the session.  │
-╰─────────────────────────────────────────────────────────────────────╯
+Starting interactive chat session. Type 'exit' to end the session.
 > update the pin ls command to print the total number of pinned items
-╭─ Info ────────────────────────────────────────────╮
-│ Updated file: /path/to/src/pinboard/cli.py        │
-╰───────────────────────────────────────────────────╯
+Updated file: /path/to/src/pinboard/cli.py
 > exit
 
 $ pin clear
-╭─ Success ────────────────────────────────╮
-│ Pinboard cleared.                        │
-╰──────────────────────────────────────────╯
+Pinboard cleared.
 ```
 
 ## Installation
