@@ -1,11 +1,12 @@
 import typer
 import os
 from typing import List
-from .ops import add_pins, clear_pins, copy_pinboard, get_pinned_items, remove_pins
+from .pin import add_pins, clear_pins, get_pinned_items, remove_pins
+from .clip import copy_pinboard
+from .term import add_term, remove_term
 from .config import set_llm_config
-from .llm import edit_files, inline_edit, ask_question
+from .llm import chat as llm_chat
 from .utils import get_clipboard_content
-from .ops import add_term, remove_term
 
 app = typer.Typer()
 
@@ -55,30 +56,38 @@ def llm(model: str):
     typer.echo(f"LLM set to {model}.")
 
 @app.command()
-def edit(message: str, with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Edit using clipboard content")):
-    """Edit pinned files using the configured LLM."""
-    if with_clipboard:
-        clipboard_content = get_clipboard_content()
-        inline_edit(message, clipboard_content)
-    else:
-        edit_files(message)
+def chat(
+    message: str = typer.Argument(None, help="Message to send to the LLM"),
+    with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Include clipboard content in the chat"),
+    interactive: bool = typer.Option(False, "--interactive", "-i", help="Start an interactive chat session")
+):
+    """Chat with the LLM about pinned files, edit them, or ask questions."""
+    clipboard_content = get_clipboard_content() if with_clipboard else None
 
-@app.command()
-def ask(message: str, with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Ask using clipboard content")):
-    """Ask a question about the pinned files and get a response from the LLM."""
-    if with_clipboard:
-        clipboard_content = get_clipboard_content()
-        response = ask_question(message, clipboard_content)
+    if interactive:
+        typer.echo("Starting interactive chat session. Type 'exit' to end the session.")
+        while True:
+            message = typer.prompt("> ", prompt_suffix="")
+            if message.lower() == 'exit':
+                break
+            process_chat_message(message, clipboard_content)
+    elif message:
+        process_chat_message(message, clipboard_content)
     else:
-        response = ask_question(message)
-    typer.echo(response)
+        typer.echo("Please provide a message or use the --interactive/-i flag to start an interactive session.")
+
+def process_chat_message(message: str, clipboard_content: str = None):
+    response = llm_chat(message, clipboard_content)
+    
+    if "<artifact" not in response:
+        typer.echo(f'"{response}"')
 
 @app.command()
 def ls():
     """List all pinned files, folders, and terms."""
     pinned_items = get_pinned_items()
     if pinned_items:
-        typer.echo("Pinned items:")
+        typer.echo(f"Pinned items ({len(pinned_items)} total):")
         for item in pinned_items:
             if item.startswith("term:"):
                 typer.echo(f"- [Term] {item[5:]}")

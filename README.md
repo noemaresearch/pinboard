@@ -14,12 +14,12 @@ $ pin term my-session
 Added 1 new term(s) to the pinboard.
 
 $ pin ls
-Pinned items:
+Pinned items (3 total):
 - [File] /path/to/README.md
 - [Directory] /path/to/src/pinboard
 - [Term] my-session
 
-# Remove some items
+# Remove some items.
 $ pin rm my-session pyproject.toml
 Removed 2 item(s) from the pinboard.
 
@@ -30,33 +30,41 @@ Pinboard contents copied to clipboard.
 $ pin llm anthropic/claude-3-5-sonnet-20240620
 LLM set to anthropic/claude-3-5-sonnet-20240620.
 
-# File editing happens in-place, new version should just show up in your editor.
-$ pin edit "add setup instructions in readme"
-Querying claude-3-5-sonnet-20240620 for edits...
+# File editing and asking questions happen through the chat command.
+$ pin chat "add setup instructions in readme"
+Querying claude-3-5-sonnet-20240620 for a response...
 Updated file: /path/to/README.md
 
 # Clipboard content can also be included in the unified string.
-$ pin edit -clip "add docstring to selected function"
-Querying claude-3-5-sonnet-20240620 for edits...
+$ pin chat -clip "add docstring to selected function"
+Querying claude-3-5-sonnet-20240620 for a response...
 Updated file: /path/to/src/pinboard/llm.py
 
 # Editing can also yield new files.
-$ pin edit "create a minimal contributing md and reference it in the readme"
-Querying claude-3-5-sonnet-20240620 for edits...
+$ pin chat "create a minimal contributing md and reference it in the readme"
+Querying claude-3-5-sonnet-20240620 for a response...
 Updated file: /path/to/README.md
 Added new file: /path/to/CONTRIBUTING.md
 
 # New files get automatically pinned.
 $ pin ls
-Pinned items:
+Pinned items (3 total):
 - [File] /path/to/README.md
 - [Directory] /path/to/src/pinboard
 - [File] /path/to/CONTRIBUTING.md
 
 # Ask questions about pinned files.
-$ pin ask "Where is the 'ask' command implemented?"
-Querying claude-3-5-sonnet-20240620 for an answer...
-"The 'ask' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'ask' that takes a message parameter and calls the ask_question function from the llm module."
+$ pin chat "where is the 'chat' command implemented?"
+Querying claude-3-5-sonnet-20240620 for a response...
+"The 'chat' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'chat' that takes optional parameters for the message, including clipboard content, and an interactive mode flag."
+
+# Interactive chat mode.
+$ pin chat -i
+Starting interactive chat session. Type 'exit' to end the session.
+> update the pin ls command to print the total number of pinned items
+Querying claude-3-5-sonnet-20240620 for a response...
+Updated file: /path/to/src/pinboard/cli.py
+> exit
 
 $ pin clear
 Pinboard cleared.
@@ -84,16 +92,7 @@ Pinboard cleared.
 
 ## Contributing
 
-We welcome contributions to Pinboard! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more information on how to get started.
-
-## Roadmap
-
-1. Editing loops that allow for iterative editing based on a fixed command being executed (e.g. `docker build ...`, `pytest ...`) and its output getting fed back in.
-
-2. `diff` view for a more granular accept/reject flow instead of just in-place edits, providing users with more control over LLM suggestions.
-
-3. Support for more LLM vendors beyond just Anthropic.
-
+Contributions are welcome. For details, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
