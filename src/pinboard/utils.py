@@ -15,11 +15,8 @@ def get_numbered_file_content(file_path: str) -> str:
     return ''.join(f"{i+1}: {line}" for i, line in enumerate(lines))
 
 def parse_llm_response(response: str) -> Dict[str, Union[str, List[Dict[str, Union[str, int]]]]]:
-    artifact_pattern = r'(?m)^<artifact identifier="([^"]+)">(.*?)^</artifact>'
     artifact_edit_pattern = r'<artifactEdit identifier="([^"]+)" from="(\d+)" to="(\d+)">(.*?)</artifactEdit>'
     new_file_pattern = r'<artifactEdit identifier="([^"]+)">(.*?)</artifactEdit>'
-
-    artifacts = {identifier: content.strip() for identifier, content in re.findall(artifact_pattern, response, re.DOTALL)}
     
     artifact_edits = {}
     for identifier, from_line, to_line, content in re.findall(artifact_edit_pattern, response, re.DOTALL):

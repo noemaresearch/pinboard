@@ -23,25 +23,26 @@ Pinned Items (4 total):
 $ pin rm my-session pyproject.toml
 Removed 2 item(s) from the pinboard.
 
+# Clear the entire pinboard.
+$ pin rm
+Pinboard cleared.
+
 # Format files as a unified string for external prompting.
 $ pin cp
 Pinboard contents copied to clipboard.
 
-$ pin llm anthropic/claude-3-5-sonnet-20240620
-LLM set to anthropic/claude-3-5-sonnet-20240620.
-
-# File editing and asking questions happen through the chat command.
-$ pin chat "add setup instructions in readme"
+# File editing and asking questions happen through the sh command.
+$ pin sh "add setup instructions in readme"
 Querying language model for a response...
 Updated file: /path/to/README.md
 
 # Clipboard content can also be included in the unified string.
-$ pin chat -clip "add docstring to selected function"
+$ pin sh -clip "add docstring to selected function"
 Querying language model for a response...
 Updated file: /path/to/src/pinboard/llm.py
 
 # Editing can also yield new files.
-$ pin chat "create a minimal contributing md and reference it in the readme"
+$ pin sh "create a minimal contributing md and reference it in the readme"
 Querying language model for a response...
 Updated file: /path/to/README.md
 Added file: /path/to/CONTRIBUTING.md
@@ -54,19 +55,23 @@ Pinned Items (3 total):
 - File: /path/to/CONTRIBUTING.md
 
 # Ask questions about pinned files.
-$ pin chat "where is the 'chat' command implemented?"
+$ pin sh "where is the 'sh' command implemented?"
 Querying language model for a response...
-The 'chat' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'chat' that takes optional parameters for the message, including clipboard content, and an interactive mode flag.
+The 'sh' command is implemented in the file /path/to/pinboard/src/pinboard/cli.py. It's defined as a Typer command function named 'sh' that takes optional parameters for the message and including clipboard content.
 
-# Interactive chat mode.
-$ pin chat -i
-Starting interactive chat session. Type 'exit' to end the session.
+# Interactive mode.
+$ pin sh
+Starting pin shell. Type 'exit' to end the session.
+> ls
+Pinned Items (3 total):
+- File: /path/to/README.md
+- Directory: /path/to/src/pinboard
+- File: /path/to/CONTRIBUTING.md
+> add newfile.txt
+Added 1 new item(s) to the pinboard.
 > update the pin ls command to print the total number of pinned items
 Updated file: /path/to/src/pinboard/cli.py
 > exit
-
-$ pin clear
-Pinboard cleared.
 ```
 
 ## Installation

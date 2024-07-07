@@ -50,13 +50,14 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
                      "3. For new files, use <artifactEdit> tags with only the 'identifier' attribute.\n"
                      "4. Use correct, absolute file paths as identifiers.\n"
                      "5. Provide only the changed content within the <artifactEdit> tags.\n"
-                     "6. To remove lines, provide an empty content within the <artifactEdit> tags.\n"
-                     "7. When creating new files or modifying existing ones, update import statements in all affected files to maintain consistency.\n"
-                     "8. Proactively identify and update any files that may be impacted by changes in module structure or file organization.\n"
-                     "9. Pinned term objects (starting with 'term:') are read-only. You can only update, add, or remove files.\n"
-                     "10. For questions, provide a direct answer without using <artifactEdit> tags.\n"
-                     "11. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will be directly injected at the specified locations, so maintaining correct indentation is crucial.\n"
-                     "12. If you intend to make multiple edits to the same artifact, rewrite the entire artifact with all changes included as one big edit.\n")
+                     "6. Do NOT include line numbers inside <artifactEdit> </artifactEdit> tags, as their contents will directly overwrite files.\n"
+                     "7. To remove lines, provide an empty content within the <artifactEdit> tags.\n"
+                     "8. When creating new files or modifying existing ones, update import statements in all affected files to maintain consistency.\n"
+                     "9. Proactively identify and update any files that may be impacted by changes in module structure or file organization.\n"
+                     "10. Pinned term objects (starting with 'term:') are read-only. You can only update, add, or remove files.\n"
+                     "11. For questions, provide a direct answer without using <artifactEdit> tags.\n"
+                     "12. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will be directly injected at the specified locations, so maintaining correct indentation is crucial.\n"
+                     "13. If you intend to make multiple edits to the same artifact, rewrite the entire artifact with all changes included as one big edit.\n")
 
     human_prompt = "Workspace overview. Current pinned items:\n\n"
     for file in all_files:
