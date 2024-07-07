@@ -1,6 +1,6 @@
 # Pinboard
 
-Pinboard is a command-line tool for managing file references when working with raw language models. It's designed to streamline codebase-level development workflows, allowing users to request contextual, in-place file updates efficiently.
+Pinboard is a command-line tool for managing file references and terminal sessions when working with raw language models. It's designed to streamline codebase-level development workflows, allowing users to request contextual, in-place file updates and interact with pinned content efficiently.
 
 ## Usage
 
@@ -9,18 +9,18 @@ $ pin add README.md src/pinboard pyproject.toml
 Added 3 new item(s) to the pinboard.
 
 # Add a tmux session to the pinboard.
-$ pin term my-session
-Added 1 new term(s) to the pinboard.
+$ pin add my-session@tmux
+Added 1 new item(s) to the pinboard.
 
 $ pin ls
 Pinned Items (4 total):
 - File: /path/to/README.md
 - Directory: /path/to/src/pinboard
 - File: /path/to/pyproject.toml
-- Term: my-session
+- Tmux Session: my-session
 
 # Remove some items.
-$ pin rm my-session pyproject.toml
+$ pin rm my-session@tmux pyproject.toml
 Removed 2 item(s) from the pinboard.
 
 # Clear the entire pinboard.
@@ -89,8 +89,9 @@ Updated file: /path/to/src/pinboard/cli.py
    $ pipx install git+https://github.com/paulbricman/pinboard.git
    ```
 
-4. Set up your Anthropic API key:
+4. Configure your language model:
    ```
+   $ pin llm anthropic/claude-3-5-sonnet-20240620
    $ export ANTHROPIC_API_KEY=your_api_key_here
    ```
 

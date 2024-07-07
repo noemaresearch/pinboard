@@ -9,7 +9,6 @@ from rich.console import Console
 from rich import box
 from .pin import add_pins, clear_pins, get_pinned_items, remove_pins
 from .clip import copy_pinboard
-from .term import add_term, remove_term
 from .config import set_llm_config
 from .llm import chat as llm_chat
 from .utils import get_clipboard_content
@@ -19,8 +18,8 @@ app = typer.Typer()
 console = Console()
 
 @app.command()
-def add(items: List[str] = typer.Argument(..., help="File or folder paths to add to the pinboard")):
-    """Add file or folder paths to the pinboard."""
+def add(items: List[str] = typer.Argument(..., help="File or folder paths to add to the pinboard, or tmux sessions with @tmux suffix")):
+    """Add file or folder paths to the pinboard, or tmux sessions with @tmux suffix."""
     added_count = add_pins(items)
     if added_count == 0:
         print_info("No new items added to the pinboard.")
@@ -28,19 +27,10 @@ def add(items: List[str] = typer.Argument(..., help="File or folder paths to add
         print_success(f"Added {added_count} new item(s) to the pinboard.")
 
 @app.command()
-def term(sessions: List[str] = typer.Argument(..., help="Term names to add to the pinboard")):
-    """Add terms to the pinboard."""
-    added_count = add_term(sessions)
-    if added_count == 0:
-        print_info("No new terms added to the pinboard.")
-    else:
-        print_success(f"Added {added_count} new term(s) to the pinboard.")
-
-@app.command()
-def rm(items: Optional[List[str]] = typer.Argument(None, help="File, folder paths, or term names to remove from the pinboard")):
+def rm(items: Optional[List[str]] = typer.Argument(None, help="File, folder paths, or tmux sessions to remove from the pinboard")):
     """Remove specified items from the pinboard or clear the entire pinboard if no items are specified."""
     if items:
-        removed_count = remove_pins(items) + remove_term(items)
+        removed_count = remove_pins(items)
         if removed_count == 0:
             print_info("No items were removed from the pinboard.")
         else:
@@ -63,7 +53,7 @@ def llm(model: str):
 
 @app.command()
 def ls():
-    """List all pinned files, folders, and terms."""
+    """List all pinned files, folders, and tmux sessions."""
     pinned_items = get_pinned_items()
     if pinned_items:
         table = Table(
@@ -77,8 +67,8 @@ def ls():
         table.add_column(f"Item ({len(pinned_items)} total)")
 
         for item in pinned_items:
-            if item.startswith("term:"):
-                table.add_row("Term", item[5:])
+            if item.endswith("@tmux"):
+                table.add_row("Tmux Session", item[:-5])
             elif os.path.isdir(item):
                 table.add_row("Directory", item)
             else:
@@ -99,8 +89,6 @@ def execute_pin_command(command: str):
 
     if cmd == "add":
         add(remaining_args)
-    elif cmd == "term":
-        term(remaining_args)
     elif cmd == "rm":
         rm(remaining_args)
     elif cmd == "cp":
@@ -133,7 +121,7 @@ def sh(
             if message.lower() == 'exit':
                 break
             
-            if message.split()[0] in ["add", "term", "rm", "cp", "llm", "ls"]:
+            if message.split()[0] in ["add", "rm", "cp", "llm", "ls"]:
                 execute_pin_command(message)
             else:
                 response, file_change_summary = process_chat_message(message, clipboard_content, chat_history, interactive=True)
@@ -143,7 +131,7 @@ def sh(
                 else:
                     chat_history.append({"role": "assistant", "content": response})
             
-            print()  # Add an empty line after the response
+            print()
     else:
         process_chat_message(message, clipboard_content, chat_history, interactive=False)
 

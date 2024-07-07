@@ -2,7 +2,7 @@ import pyclip
 import os
 from .pin import get_pinned_items, get_unique_files
 from .file import get_all_files_in_directory, is_valid_file
-from .term import get_term_content
+from .pin import get_term_content
 
 def copy_pinboard():
     pinned_items = get_pinned_items()
@@ -10,8 +10,8 @@ def copy_pinboard():
     content = ["Table of contents"]
 
     for item in pinned_items:
-        if item.startswith("term:"):
-            content.append(f"- {item[5:]} (Term)")
+        if item.endswith("@tmux"):
+            content.append(f"- {item[:-5]} (Tmux Session)")
         elif os.path.isfile(item) and is_valid_file(item):
             content.append(f"- {os.path.relpath(item)}")
         elif os.path.isdir(item):
@@ -35,9 +35,9 @@ def copy_pinboard():
         content.append("")
 
     for item in pinned_items:
-        if item.startswith("term:"):
-            session_name = item[5:]
-            content.append(f"# Term: {session_name}")
+        if item.endswith("@tmux"):
+            session_name = item[:-5]
+            content.append(f"# Tmux Session: {session_name}")
             content.append("```")
             content.append(get_term_content(session_name))
             content.append("```")

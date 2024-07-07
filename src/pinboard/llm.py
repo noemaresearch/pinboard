@@ -7,7 +7,7 @@ from rich.console import Console
 from .config import get_llm_config
 from .file import update_file, add_new_file, get_all_files_in_directory, is_valid_file, remove_file
 from .pin import get_pinned_items, remove_pins
-from .term import get_term_content
+from .pin import get_term_content
 from .utils import get_file_content, get_numbered_file_content, parse_llm_response, apply_edits
 from .format import print_file_change, print_info
 
@@ -25,7 +25,7 @@ def get_all_pinned_files():
 def generate_file_change_summary(edited_files: Dict[str, Union[str, List[Dict[str, Union[str, int]]]]]) -> str:
     summary = []
     for file_path, edits in edited_files.items():
-        if file_path.startswith("term:"):
+        if file_path.endswith("@tmux"):
             summary.append(f"Skipped read-only term object: {file_path}")
         elif isinstance(edits, list):
             if any(edit['content'].strip() == "" for edit in edits):
@@ -45,8 +45,8 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
                      "If the user requests any kinds of codebase changes, respond with the edited content using <artifactEdit> tags. "
                      "If the user asks a question, provide a concise response. "
                      "Follow these rules strictly:\n"
-                     "1. For edits, use <artifactEdit> tags with 'identifier', 'from', and 'to' attributes.\n"
-                     "2. The 'from' index is inclusive, and the 'to' index is exclusive. Use newlines liberally.\n"
+                     "1. For edits (including complete file rewrites), use <artifactEdit> tags with 'identifier', 'from', and 'to' attributes.\n"
+                     "2. The 'from' index is inclusive, and the 'to' index is exclusive. Set 'from' to exactly the first line of the intended edit.\n"
                      "3. For new files, use <artifactEdit> tags with only the 'identifier' attribute.\n"
                      "4. Use correct, absolute file paths as identifiers.\n"
                      "5. Provide only the changed content within the <artifactEdit> tags.\n"
@@ -54,7 +54,7 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
                      "7. To remove lines, provide an empty content within the <artifactEdit> tags.\n"
                      "8. When creating new files or modifying existing ones, update import statements in all affected files to maintain consistency.\n"
                      "9. Proactively identify and update any files that may be impacted by changes in module structure or file organization.\n"
-                     "10. Pinned term objects (starting with 'term:') are read-only. You can only update, add, or remove files.\n"
+                     "10. Pinned term objects (ending with @tmux) are read-only. You can only update, add, or remove files.\n"
                      "11. For questions, provide a direct answer without using <artifactEdit> tags.\n"
                      "12. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will be directly injected at the specified locations, so maintaining correct indentation is crucial.\n"
                      "13. If you intend to make multiple edits to the same artifact, rewrite the entire artifact with all changes included as one big edit.\n")
@@ -65,8 +65,8 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
 
     pinned_items = get_pinned_items()
     for item in pinned_items:
-        if item.startswith("term:"):
-            session_name = item[5:]
+        if item.endswith("@tmux"):
+            session_name = item[:-5]
             human_prompt += f"<artifact identifier=\"{item}\">\n{get_term_content(session_name)}\n</artifact>\n\n"
 
     if clipboard_content:
@@ -90,7 +90,7 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
     if "<artifactEdit" in content:
         edited_files = parse_llm_response(content)
         for file_path, edits in edited_files.items():
-            if file_path.startswith("term:"):
+            if file_path.endswith("@tmux"):
                 print_info(f"Skipping read-only term object: {file_path}")
             elif isinstance(edits, list):
                 file_content = get_file_content(file_path)
@@ -100,7 +100,8 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
                     print_file_change("Removed", file_path)
                 else:
                     update_file(file_path, updated_content)
-                    print_file_change("Updated", file_path)
+                    for edit in edits:
+                        print_file_change("Updated", file_path, edit["from"], edit["to"])
             elif isinstance(edits, str):  # New file
                 add_new_file(file_path, edits)
                 print_file_change("Added", file_path)
