@@ -2,7 +2,7 @@ import pyclip
 import os
 from .pin import get_pinned_items, get_unique_files
 from .file import get_all_files_in_directory, is_valid_file
-from .pin import get_term_content
+from .term import get_term_content
 
 def copy_pinboard():
     pinned_items = get_pinned_items()

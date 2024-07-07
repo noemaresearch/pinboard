@@ -19,8 +19,8 @@ def print_file_change(action: str, file_path: str, from_line: Optional[int] = No
         print_success(f"{action} file: {file_path}")
     elif action == "Updated":
         if from_line is not None and to_line is not None:
-            print_info(f"{action} file: {file_path} (lines {from_line}-{to_line})")
+            print_success(f"{action} file: {file_path} (lines {from_line}-{to_line})")
         else:
-            print_info(f"{action} file: {file_path}")
+            print_success(f"{action} file: {file_path}")
     elif action == "Removed":
-        print_error(f"{action} file: {file_path}")
+        print_success(f"{action} file: {file_path}")

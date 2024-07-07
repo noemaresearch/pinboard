@@ -1,9 +1,9 @@
 import os
 import json
-import subprocess
 from typing import List, Set
 from platformdirs import user_data_dir
 from .file import is_valid_file, get_all_files_in_directory
+from .term import add_term, remove_term
 
 DATA_DIR = user_data_dir("pinboard")
 PINBOARD_FILE = os.path.join(DATA_DIR, "pinboard.json")
@@ -28,7 +28,7 @@ def add_pins(items: List[str]) -> int:
     new_pins = set()
     for item in items:
         if item.endswith("@tmux"):
-            new_pins.add(item)
+            new_pins.update(add_term([item[:-5]]))
         else:
             new_pins.add(os.path.abspath(item))
     updated_pins = list(existing_pins.union(new_pins))
@@ -40,7 +40,7 @@ def remove_pins(items: List[str]) -> int:
     items_to_remove = set()
     for item in items:
         if item.endswith("@tmux"):
-            items_to_remove.add(item)
+            items_to_remove.update(remove_term([item[:-5]]))
         else:
             items_to_remove.add(os.path.abspath(item))
     updated_pins = list(existing_pins - items_to_remove)
@@ -60,29 +60,3 @@ def get_unique_files(pinned_items: List[str]) -> Set[str]:
         elif os.path.isdir(item):
             unique_files.update(get_all_files_in_directory(item))
     return unique_files
-
-
-def add_term(sessions: List[str]) -> int:
-    existing_pins = set(get_pinned_items())
-    new_pins = set(f"{session}@tmux" for session in sessions)
-    updated_pins = list(existing_pins.union(new_pins))
-    save_pinned_items(updated_pins)
-    return len(updated_pins) - len(existing_pins)
-
-def remove_term(sessions: List[str]) -> int:
-    existing_pins = set(get_pinned_items())
-    items_to_remove = set(f"{session}@tmux" for session in sessions)
-    updated_pins = list(existing_pins - items_to_remove)
-    save_pinned_items(updated_pins)
-    return len(existing_pins) - len(updated_pins)
-
-def get_term_content(session_name: str) -> str:
-    try:
-        output = subprocess.check_output(
-            ["tmux", "capture-pane", "-p", "-t", session_name],
-            stderr=subprocess.STDOUT,
-            universal_newlines=True
-        )
-        return output.strip()
-    except subprocess.CalledProcessError as e:
-        return f"Error capturing term content: {e.output}"

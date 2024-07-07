@@ -7,7 +7,7 @@ from rich.console import Console
 from .config import get_llm_config
 from .file import update_file, add_new_file, get_all_files_in_directory, is_valid_file, remove_file
 from .pin import get_pinned_items, remove_pins
-from .pin import get_term_content
+from .term import get_term_content
 from .utils import get_file_content, get_numbered_file_content, parse_llm_response, apply_edits
 from .format import print_file_change, print_info
 
