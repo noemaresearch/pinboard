@@ -15,7 +15,7 @@ def get_all_files_in_directory(directory: str) -> Set[str]:
     all_files = set()
     for root, dirs, files in os.walk(directory):
         # Ignore hidden directories
-        dirs[:] = [d for d in dirs if not d.startswith('.')]
+        dirs[:] = [d for d in dirs if not d.startswith('.') and not d.startswith('__')]
         
         for file in files:
             file_path = os.path.abspath(os.path.join(root, file))

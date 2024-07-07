@@ -1,59 +1,64 @@
 import typer
 import os
 from typing import List
+from rich import print
+from rich.table import Table
+from rich.console import Console
 from .pin import add_pins, clear_pins, get_pinned_items, remove_pins
 from .clip import copy_pinboard
 from .term import add_term, remove_term
 from .config import set_llm_config
 from .llm import chat as llm_chat
 from .utils import get_clipboard_content
+from .format import print_success, print_error, print_info, print_file_change
 
 app = typer.Typer()
+console = Console()
 
 @app.command()
 def add(items: List[str] = typer.Argument(..., help="File or folder paths to add to the pinboard")):
     """Add file or folder paths to the pinboard."""
     added_count = add_pins(items)
     if added_count == 0:
-        typer.echo("No new items added to the pinboard.")
+        print_info("No new items added to the pinboard.")
     else:
-        typer.echo(f"Added {added_count} new item(s) to the pinboard.")
+        print_success(f"Added {added_count} new item(s) to the pinboard.")
 
 @app.command()
 def term(sessions: List[str] = typer.Argument(..., help="Term names to add to the pinboard")):
     """Add terms to the pinboard."""
     added_count = add_term(sessions)
     if added_count == 0:
-        typer.echo("No new terms added to the pinboard.")
+        print_info("No new terms added to the pinboard.")
     else:
-        typer.echo(f"Added {added_count} new term(s) to the pinboard.")
+        print_success(f"Added {added_count} new term(s) to the pinboard.")
 
 @app.command()
 def rm(items: List[str] = typer.Argument(..., help="File, folder paths, or term names to remove from the pinboard")):
     """Remove file, folder paths, or term names from the pinboard."""
     removed_count = remove_pins(items) + remove_term(items)
     if removed_count == 0:
-        typer.echo("No items were removed from the pinboard.")
+        print_info("No items were removed from the pinboard.")
     else:
-        typer.echo(f"Removed {removed_count} item(s) from the pinboard.")
+        print_success(f"Removed {removed_count} item(s) from the pinboard.")
 
 @app.command()
 def clear():
     """Clear the contents of the pinboard."""
     clear_pins()
-    typer.echo("Pinboard cleared.")
+    print_success("Pinboard cleared.")
 
 @app.command()
 def cp():
     """Copy the contents of the pinboard to the clipboard."""
     copy_pinboard()
-    typer.echo("Pinboard contents copied to clipboard.")
+    print_success("Pinboard contents copied to clipboard.")
 
 @app.command()
 def llm(model: str):
     """Configure the LLM to use for editing files."""
     set_llm_config(model)
-    typer.echo(f"LLM set to {model}.")
+    print_success(f"LLM set to {model}.")
 
 @app.command()
 def chat(
@@ -65,7 +70,7 @@ def chat(
     clipboard_content = get_clipboard_content() if with_clipboard else None
 
     if interactive:
-        typer.echo("Starting interactive chat session. Type 'exit' to end the session.")
+        print_info("Starting interactive chat session. Type 'exit' to end the session.")
         while True:
             message = typer.prompt("> ", prompt_suffix="")
             if message.lower() == 'exit':
@@ -74,29 +79,35 @@ def chat(
     elif message:
         process_chat_message(message, clipboard_content)
     else:
-        typer.echo("Please provide a message or use the --interactive/-i flag to start an interactive session.")
+        print_error("Please provide a message or use the --interactive/-i flag to start an interactive session.")
 
 def process_chat_message(message: str, clipboard_content: str = None):
+    print_info("Querying language model for a response...")
     response = llm_chat(message, clipboard_content)
     
     if "<artifact" not in response:
-        typer.echo(f'"{response}"')
+        print(Panel(response, title="Response", expand=False))
 
 @app.command()
 def ls():
     """List all pinned files, folders, and terms."""
     pinned_items = get_pinned_items()
     if pinned_items:
-        typer.echo(f"Pinned items ({len(pinned_items)} total):")
+        table = Table(title=f"Pinned Items ({len(pinned_items)} total)")
+        table.add_column("Type", style="cyan")
+        table.add_column("Item", style="green")
+
         for item in pinned_items:
             if item.startswith("term:"):
-                typer.echo(f"- [Term] {item[5:]}")
+                table.add_row("Term", item[5:])
             elif os.path.isdir(item):
-                typer.echo(f"- [Directory] {item}")
+                table.add_row("Directory", item)
             else:
-                typer.echo(f"- [File] {item}")
+                table.add_row("File", item)
+
+        console.print(table)
     else:
-        typer.echo("The pinboard is currently empty.")
+        print_info("The pinboard is currently empty.")
 
 if __name__ == "__main__":
     app()
