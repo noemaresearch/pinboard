@@ -106,9 +106,6 @@ $ pin chat -i
 ╰─────────────────────────────────────────────────────────────────────╯
 > update the pin ls command to print the total number of pinned items
 ╭─ Info ────────────────────────────────────────────╮
-│ Querying language model for a response...         │
-╰───────────────────────────────────────────────────╯
-╭─ Info ────────────────────────────────────────────╮
 │ Updated file: /path/to/src/pinboard/cli.py        │
 ╰───────────────────────────────────────────────────╯
 > exit
