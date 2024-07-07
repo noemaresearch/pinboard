@@ -1,5 +1,6 @@
 import os
 import json
+from typing import Dict, List, Union
 from anthropic import Anthropic
 import typer
 from rich.console import Console
@@ -21,17 +22,31 @@ def get_all_pinned_files():
            [file for item in pinned_items if os.path.isdir(item) 
             for file in get_all_files_in_directory(item)]
 
-def chat(message: str, clipboard_content: str = None):
+def generate_file_change_summary(edited_files: Dict[str, Union[str, List[Dict[str, Union[str, int]]]]]) -> str:
+    summary = []
+    for file_path, edits in edited_files.items():
+        if file_path.startswith("term:"):
+            summary.append(f"Skipped read-only term object: {file_path}")
+        elif isinstance(edits, list):
+            if any(edit['content'].strip() == "" for edit in edits):
+                summary.append(f"Removed file: {file_path}")
+            else:
+                summary.append(f"Updated file: {file_path}")
+        elif isinstance(edits, str):
+            summary.append(f"Added file: {file_path}")
+    return "\n".join(summary) if summary else "No files were edited, added, or removed."
+
+def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[str, str]] = None):
     client = get_llm_client()
     config = get_llm_config()
     all_files = get_all_pinned_files()
 
     system_prompt = ("You are an AI assistant that can answer questions about files and edit them. "
-                     "If the user asks for any kinds of changes, respond with the edited content using <artifactEdit> tags. "
-                     "If the user instead asks a question, provide a concise and informative response. "
+                     "If the user requests any kinds of codebase changes, respond with the edited content using <artifactEdit> tags. "
+                     "If the user asks a question, provide a concise response. "
                      "Follow these rules strictly:\n"
                      "1. For edits, use <artifactEdit> tags with 'identifier', 'from', and 'to' attributes.\n"
-                     "2. The 'from' attribute is inclusive, and the 'to' attribute is exclusive.\n"
+                     "2. The 'from' index is inclusive, and the 'to' index is exclusive. Use newlines liberally.\n"
                      "3. For new files, use <artifactEdit> tags with only the 'identifier' attribute.\n"
                      "4. Use correct, absolute file paths as identifiers.\n"
                      "5. Provide only the changed content within the <artifactEdit> tags.\n"
@@ -40,9 +55,10 @@ def chat(message: str, clipboard_content: str = None):
                      "8. Proactively identify and update any files that may be impacted by changes in module structure or file organization.\n"
                      "9. Pinned term objects (starting with 'term:') are read-only. You can only update, add, or remove files.\n"
                      "10. For questions, provide a direct answer without using <artifactEdit> tags.\n"
-                     "11. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will be directly injected at the specified locations, so maintaining correct indentation is crucial.")
+                     "11. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will be directly injected at the specified locations, so maintaining correct indentation is crucial.\n"
+                     "12. If you intend to make multiple edits to the same artifact, rewrite the entire artifact with all changes included as one big edit.\n")
 
-    human_prompt = "Current files:\n\n"
+    human_prompt = "Current pinned items:\n\n"
     for file in all_files:
         human_prompt += f"<artifact identifier=\"{file}\">\n{get_numbered_file_content(file)}\n</artifact>\n\n"
 
@@ -54,14 +70,18 @@ def chat(message: str, clipboard_content: str = None):
 
     if clipboard_content:
         human_prompt += f"Clipboard content:\n{clipboard_content}\n\n"
-
-    human_prompt += f"User: {message}"
+    
+    messages = []
+    if chat_history:
+        messages.extend(chat_history)
+        
+    messages.append({"role": "user", "content": f"{human_prompt}\nUser: {message}"})
 
     response = client.messages.create(
         model=config["model"],
         max_tokens=4000,
+        messages=messages,
         system=system_prompt,
-        messages=[{"role": "user", "content": human_prompt}]
     )
 
     content = response.content[0].text if response.content else ""
@@ -86,5 +106,9 @@ def chat(message: str, clipboard_content: str = None):
         
         if not edited_files:
             print_info("No files were edited, added, or removed.")
-    
-    return content
+        
+        # Generate a summary of file changes for the chat history
+        file_change_summary = generate_file_change_summary(edited_files)
+        return content, file_change_summary
+    else:
+        return content, None

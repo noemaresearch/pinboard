@@ -1,6 +1,6 @@
 # Pinboard
 
-Pinboard is a command-line tool for managing file references when working with raw language models. It's designed to streamline codebase-level development workflows, allowing users to request contextual, in-place file updates efficiently. Pinboard uses Typer for command-line interface management and Rich for beautiful, formatted output.
+Pinboard is a command-line tool for managing file references when working with raw language models. It's designed to streamline codebase-level development workflows, allowing users to request contextual, in-place file updates efficiently.
 
 ## Usage
 

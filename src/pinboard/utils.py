@@ -38,8 +38,8 @@ def parse_llm_response(response: str) -> Dict[str, Union[str, List[Dict[str, Uni
 def apply_edits(file_content: str, edits: List[Dict[str, Union[str, int]]]) -> str:
     lines = file_content.split('\n')
     for edit in sorted(edits, key=lambda x: x['from'], reverse=True):
-        from_line = edit['from'] - 1  # Convert to 0-based index
-        to_line = edit['to']  # 'to' is exclusive
+        from_line = edit['from'] - 1
+        to_line = edit['to'] - 1
         new_content = edit['content'].split('\n')
         lines[from_line:to_line] = new_content
     return '\n'.join(lines)

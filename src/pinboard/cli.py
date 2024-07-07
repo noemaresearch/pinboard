@@ -1,6 +1,6 @@
 import typer
 import os
-from typing import List
+from typing import List, Dict
 from rich import print
 from rich.panel import Panel
 from rich.table import Table
@@ -69,6 +69,7 @@ def chat(
 ):
     """Chat with the LLM about pinned files, edit them, or ask questions."""
     clipboard_content = get_clipboard_content() if with_clipboard else None
+    chat_history = []
 
     if interactive:
         print_info("Starting interactive chat session. Type 'exit' to end the session.")
@@ -76,18 +77,25 @@ def chat(
             message = typer.prompt("> ", prompt_suffix="")
             if message.lower() == 'exit':
                 break
-            process_chat_message(message, clipboard_content)
+            response, file_change_summary = process_chat_message(message, clipboard_content, chat_history, interactive=True)
+            chat_history.append({"role": "user", "content": message})
+            if file_change_summary:
+                chat_history.append({"role": "assistant", "content": file_change_summary})
+            else:
+                chat_history.append({"role": "assistant", "content": response})
     elif message:
-        process_chat_message(message, clipboard_content)
+        process_chat_message(message, clipboard_content, chat_history, interactive=False)
     else:
         print_error("Please provide a message or use the --interactive/-i flag to start an interactive session.")
 
-def process_chat_message(message: str, clipboard_content: str = None):
-    print_info("Querying language model for a response...")
-    response = llm_chat(message, clipboard_content)
+def process_chat_message(message: str, clipboard_content: str = None, chat_history: List[Dict[str, str]] = None, interactive: bool = False):
+    if not interactive:
+        print_info("Querying language model for a response...")
+    response, file_change_summary = llm_chat(message, clipboard_content, chat_history)
     
     if "<artifact" not in response:
-            print(Panel(response, title="Response", title_align="left", expand=False, style="green"))
+        print(Panel(response, title="Response", title_align="left", expand=False, style="green"))
+    return response, file_change_summary
 
 @app.command()
 def ls():
