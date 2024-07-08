@@ -20,6 +20,10 @@ Pinboard is a command-line tool for managing file references when working with r
 
 ![](/media/interactive.png)
 
+## Documentation
+
+For detailed usage instructions and command references, please refer to the [Pinboard CLI Documentation](docs/README.md).
+
 ## Installation
 
 1. Ensure Python 3.8 or later is installed.

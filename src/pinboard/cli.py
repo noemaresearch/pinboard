@@ -20,7 +20,14 @@ console = Console()
 
 @app.command()
 def add(items: List[str] = typer.Argument(..., help="File or folder paths to add to the pinboard, or tmux sessions with @tmux suffix")):
-    """Add file or folder paths to the pinboard, or tmux sessions with @tmux suffix."""
+    """
+    Add file or folder paths to the pinboard, or tmux sessions with @tmux suffix.
+
+    This command allows you to pin specific files, entire folders, or tmux sessions for quick access and manipulation.
+    For tmux sessions, append '@tmux' to the session name (e.g., 'mysession@tmux').
+
+    If a folder is added, all valid files within that folder (and its subfolders) will be included in the pinboard.
+    """
     added_count = add_pins(items)
     if added_count == 0:
         print_info("No new items added to the pinboard.")
@@ -28,8 +35,15 @@ def add(items: List[str] = typer.Argument(..., help="File or folder paths to add
         print_success(f"Added {added_count} new item(s) to the pinboard.")
 
 @app.command()
-def rm(items: Optional[List[str]] = typer.Argument(None, help="File, folder paths, or tmux sessions to remove from the pinboard")):
-    """Remove specified items from the pinboard or clear the entire pinboard if no items are specified."""
+def rm(items: Optional[List[str]] = typer.Argument(None, help="File or folder paths, or tmux sessions to remove from the pinboard")):
+    """
+    Remove specified items from the pinboard or clear the entire pinboard if no items are specified.
+
+    This command allows you to unpin specific files, folders, or tmux sessions from the pinboard.
+    If no arguments are provided, it will clear the entire pinboard.
+
+    For tmux sessions, append '@tmux' to the session name (e.g., 'mysession@tmux').
+    """
     if items:
         removed_count = remove_pins(items)
         if removed_count == 0:
@@ -42,19 +56,38 @@ def rm(items: Optional[List[str]] = typer.Argument(None, help="File, folder path
 
 @app.command()
 def cp():
-    """Copy the contents of the pinboard to the clipboard."""
+    """
+    Copy the contents of the pinboard to the clipboard.
+
+    This command generates a formatted text representation of all pinned items,
+    including file contents and tmux session outputs, and copies it to the system clipboard.
+    This is useful for quickly sharing the current state of your pinboard or for use with language models.
+    """
     copy_pinboard()
     print_success("Pinboard contents copied to clipboard.")
 
 @app.command()
 def llm(model: str):
-    """Configure the LLM to use for editing files."""
+    """
+    Configure the Language Model (LLM) to use for editing files and answering questions.
+
+    This command sets the specific LLM model to be used for all subsequent operations that require AI assistance.
+    Currently, only Anthropic models are supported.
+
+    Args:
+        model: The identifier of the LLM model (e.g., 'anthropic/claude-3-opus-20240229')
+    """
     set_llm_config(model)
     print_success(f"LLM set to {model}.")
 
 @app.command()
 def ls():
-    """List all pinned files, folders, and tmux sessions."""
+    """
+    List all pinned files, folders, and tmux sessions.
+
+    This command displays a formatted table showing all items currently pinned in the pinboard.
+    It categorizes items as files, directories, or tmux sessions for easy overview.
+    """
     pinned_items = get_pinned_items()
     if pinned_items:
         table = Table(
@@ -106,10 +139,24 @@ def execute_pin_command(command: str):
 
 @app.command()
 def sh(
-    message: str = typer.Argument(None, help="Message to send to the LLM"),
-    with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Include clipboard content in the chat"),
+    message: str = typer.Argument(None, help="Message to send to the LLM for one-time processing"),
+    with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Include clipboard content in the chat context"),
 ):
-    """Start an interactive shell or send a one-time message to the LLM about pinned files, edit them, or ask questions."""
+    """
+    Start an interactive shell or send a one-time message to the LLM about pinned files.
+
+    This command allows you to interact with the AI assistant to ask questions about pinned files,
+    request file edits, or perform other operations on your codebase. It can be used in two modes:
+    1. Interactive shell: If no message is provided, it starts an interactive session.
+    2. One-time message: If a message is provided, it processes that message and exits.
+
+    In the interactive mode, you can use pinboard commands (add, rm, cp, llm, ls) directly.
+    The AI assistant can make changes to your files based on your requests.
+
+    Args:
+        message: The message to send to the LLM (optional, for one-time processing)
+        with_clipboard: Include the current clipboard content in the chat context
+    """
     clipboard_content = get_clipboard_content() if with_clipboard else None
     chat_history = []
     if message is None:

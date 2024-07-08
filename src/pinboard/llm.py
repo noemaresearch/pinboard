@@ -50,14 +50,14 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
                      "3. For genuinely new files that haven't existed before at all, use <artifactEdit> tags with only the 'identifier' attribute. Only skip 'from' and 'to' when the file doesn't exist. Otherwise, attempt edits between 'from' and 'to' line lumbers.\n"
                      "4. Use valid, absolute file paths as identifiers.\n"
                      "5. Provide only the changed content within the <artifactEdit> tags.\n"
-                     "6. Do NOT include line numbers (e.g. '1.') inside <artifactEdit> </artifactEdit> responses, not even for newly created files. The line numbers are only meant to help you identify which lines to edit, and are not actually part of the pinned files.\n"
+                     "6. Do NOT include line numbers (e.g. '1.') between <artifactEdit> </artifactEdit> tags child content, not even for newly created files. The line numbers are only meant to help you identify which lines to edit, and are not actually part of the pinned files.\n"
                      "7. To remove lines, provide no content within the <artifactEdit> tags.\n"
                      "8. When creating new files or modifying existing ones, surgically update references (e.g. import statements) in all affected files to maintain consistency. Proactively identify and update any files that may be impacted by changes in module structure or file organization.\n"
                      "9. Pinned term objects (ending with @tmux) are read-only. You can only update, add, or remove files.\n"
                      "10. For questions, provide a concise, direct answer without using <artifactEdit> tags at all.\n"
                      "11. Accurately preserve tab indentation when producing artifactEdits. The content inside <artifactEdit> tags will directly replace the referenced lines, so maintaining correct indentation is crucial.\n"
                      "12. If you intend to make edits in different parts of the same artifact, rewrite the entire artifact with all changes included in one big edit. In general, however, try to make precise, surgical edits.\n"
-                     "13. If you intend to add a considerable number of novel lines to a file (e.g. an entirely new function, a series of new statement), attempt to make granular edits from and to a single line number which gets overwritten with the new content. Make sure to preserve the overwritten content in the new content in that case (e.g. a newline).\n")
+                     "13. If you intend to add a considerable number of novel lines to a file (e.g. an entirely new function, a series of new statement), attempt to make granular edits from and to a single line number which gets overwritten with the new content. Make sure to preserve the overwritten content in the new content in that case.\n")
 
     human_prompt = "Workspace overview. Current pinned items:\n\n"
     for file in all_files:

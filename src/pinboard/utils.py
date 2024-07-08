@@ -25,7 +25,7 @@ def parse_llm_response(response: str) -> Dict[str, Union[str, List[Dict[str, Uni
         artifact_edits[identifier].append({
             'from': int(from_line),
             'to': int(to_line),
-            'content': content
+            'content': content.strip("\n")
         })
     
     new_files = {identifier: content.strip() for identifier, content in re.findall(new_file_pattern, response, re.DOTALL)}
