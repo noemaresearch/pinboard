@@ -25,7 +25,7 @@ def parse_llm_response(response: str) -> Dict[str, Union[str, List[Dict[str, Uni
         artifact_edits[identifier].append({
             'from': int(from_line),
             'to': int(to_line),
-            'content': content.strip()
+            'content': content
         })
     
     new_files = {identifier: content.strip() for identifier, content in re.findall(new_file_pattern, response, re.DOTALL)}
@@ -36,7 +36,7 @@ def apply_edits(file_content: str, edits: List[Dict[str, Union[str, int]]]) -> s
     lines = file_content.split('\n')
     for edit in sorted(edits, key=lambda x: x['from'], reverse=True):
         from_line = edit['from'] - 1
-        to_line = edit['to'] - 1
+        to_line = edit['to']
         new_content = edit['content'].split('\n')
         lines[from_line:to_line] = new_content
     return '\n'.join(lines)
