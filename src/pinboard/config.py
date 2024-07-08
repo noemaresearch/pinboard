@@ -2,7 +2,7 @@ import shelve
 from platformdirs import user_config_dir
 
 CONFIG_DIR = user_config_dir("pinboard")
-CONFIG_FILE = f"{CONFIG_DIR}/config.db"
+CONFIG_FILE = f"{CONFIG_DIR}/config"
 
 def get_config():
     with shelve.open(CONFIG_FILE) as config:
