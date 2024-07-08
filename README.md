@@ -24,7 +24,7 @@ Pinboard is a command-line tool for managing file references when working with r
 
 3. Install Pinboard:
    ```
-   $ pipx install git+https://github.com/paulbricman/pinboard.git
+   $ pipx install git+https://github.com/noemaresearch/pinboard.git
    ```
 
 4. Configure your language model:
