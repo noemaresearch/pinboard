@@ -75,7 +75,7 @@ def llm(model: str):
     Currently, only Anthropic models are supported.
 
     Args:
-        model: The identifier of the LLM model (e.g., 'anthropic/claude-3-opus-20240229')
+        model: The identifier of the LLM model (e.g., 'anthropic/claude-3-5-sonnet-20240620')
     """
     set_llm_config(model)
     print_success(f"LLM set to {model}.")
