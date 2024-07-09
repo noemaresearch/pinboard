@@ -1,6 +1,7 @@
-
+import re
 import typer
 import os
+import json
 import shlex
 from typing import List, Dict, Optional
 from rich import print
@@ -10,10 +11,11 @@ from rich.console import Console
 from rich import box
 from .pin import add_pins, clear_pins, get_pinned_items, remove_pins
 from .clip import copy_pinboard
-from .config import set_llm_config
-from .llm import chat as llm_chat
+from .config import set_llm_config, get_last_operation, get_file_version, clear_last_operation
 from .utils import get_clipboard_content
 from .format import print_success, print_error, print_info, print_file_change
+from .file import update_file, remove_file
+from .llm import chat as llm_chat
 
 app = typer.Typer()
 console = Console()
@@ -141,6 +143,7 @@ def execute_pin_command(command: str):
 def sh(
     message: str = typer.Argument(None, help="Message to send to the LLM for one-time processing"),
     with_clipboard: bool = typer.Option(False, "--with-clipboard", "-clip", help="Include clipboard content in the chat context"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show full response from the language model")
 ):
     """
     Start an interactive shell or send a one-time message to the LLM about pinned files.
@@ -172,7 +175,7 @@ def sh(
             if message.split()[0] in ["add", "rm", "cp", "llm", "ls"]:
                 execute_pin_command(message)
             else:
-                response, file_change_summary = process_chat_message(message, clipboard_content, chat_history, interactive=True)
+                response, file_change_summary = process_chat_message(message, clipboard_content, chat_history, interactive=True, verbose=verbose)
                 chat_history.append({"role": "user", "content": message})
                 if file_change_summary:
                     chat_history.append({"role": "assistant", "content": file_change_summary})
@@ -181,16 +184,56 @@ def sh(
             
             print()
     else:
-        process_chat_message(message, clipboard_content, chat_history, interactive=False)
+        process_chat_message(message, clipboard_content, chat_history, interactive=False, verbose=verbose)
 
-def process_chat_message(message: str, clipboard_content: str = None, chat_history: List[Dict[str, str]] = None, interactive: bool = False):
+def process_chat_message(message: str, clipboard_content: str = None, chat_history: List[Dict[str, str]] = None, interactive: bool = False, verbose: bool = False):
     if not interactive:
         print_info("Querying language model for a response...")
-    response, file_change_summary = llm_chat(message, clipboard_content, chat_history)
+    response, _ = llm_chat(message, clipboard_content, chat_history)
     
-    if "<artifact" not in response:
+    if "<artifact" not in response or verbose:
+        response = re.sub(r'<artifactEdit[^>]*>.*?</artifactEdit>', "...", response, flags=re.DOTALL)
         print(Panel(response, title="Response", title_align="left", expand=False, border_style="green"))
-    return response, file_change_summary
+        
+@app.command()
+def undo():
+    """
+    Undo the last file changes made by the 'pin sh' command.
+
+    This command reverts the added, updated, or removed files based on the last 'pin sh' operation.
+    It only undoes the most recent changes and cannot perform multiple undos.
+    """
+    last_operation = get_last_operation()
+
+    if not last_operation:
+        print_error("No previous operation to undo.")
+        return
+
+    edited_files = last_operation.get("edited_files", {})
+    if not edited_files:
+        print_info("No files were affected in the last operation.")
+        return
+
+    print_info(f"Files affected in the last operation: {', '.join(edited_files.keys())}")
+
+    for file_path, action in edited_files.items():
+        print_info(f"Undoing action '{action}' for file: {file_path}")
+        if action == "added":
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print_file_change("Removed", file_path)
+            else:
+                print_error(f"File not found: {file_path}")
+        elif action in ["updated", "removed"]:
+            previous_content = get_file_version(file_path)
+            if previous_content is not None:
+                update_file(file_path, previous_content)
+                print_file_change("Restored", file_path)
+            else:
+                print_error(f"No previous version found for: {file_path}")
+
+    clear_last_operation()
+    print_success("Undo operation completed.")
 
 if __name__ == "__main__":
     app()

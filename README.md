@@ -55,6 +55,7 @@ $ pin [OPTIONS] COMMAND [ARGS]...
 * `ls`: List all pinned files, folders, and tmux...
 * `rm`: Remove specified items from the pinboard...
 * `sh`: Start an interactive shell or send a...
+* `undo`: Undo the last file changes made by the...
 
 ## `pin add`
 
@@ -105,7 +106,7 @@ This command sets the specific LLM model to be used for all subsequent operation
 Currently, only Anthropic models are supported.
 
 Args:
-    model: The identifier of the LLM model (e.g., 'anthropic/claude-3-opus-20240229')
+    model: The identifier of the LLM model (e.g., 'anthropic/claude-3-5-sonnet-20240620')
 
 **Usage**:
 
@@ -190,6 +191,24 @@ $ pin sh [OPTIONS] [MESSAGE]
 **Options**:
 
 * `-clip, --with-clipboard`: Include clipboard content in the chat context
+* `-v, --verbose`: Show full response from the language model
+* `--help`: Show this message and exit.
+
+## `pin undo`
+
+Undo the last file changes made by the 'pin sh' command.
+
+This command reverts the added, updated, or removed files based on the last 'pin sh' operation.
+It only undoes the most recent changes and cannot perform multiple undos.
+
+**Usage**:
+
+```console
+$ pin undo [OPTIONS]
+```
+
+**Options**:
+
 * `--help`: Show this message and exit.
 
 ## License

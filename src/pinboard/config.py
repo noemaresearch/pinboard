@@ -1,6 +1,7 @@
 import shelve
 import os
 from platformdirs import user_config_dir
+from typing import Dict, Any, Optional
 
 CONFIG_DIR = user_config_dir("pinboard")
 CONFIG_FILE = f"{CONFIG_DIR}/config"
@@ -38,6 +39,30 @@ def get_llm_config():
         "model": config.get("llm_model", "claude-3-5-sonnet-20240620")
     }
 
+def store_last_operation(operation_data: Dict[str, Any]):
+    set_config("last_operation", operation_data)
+
+def get_last_operation() -> Dict[str, Any]:
+    return get_config().get("last_operation", {})
+
+def clear_last_operation():
+    set_config("last_operation", {})
+
+def store_file_version(file_path: str, content: str):
+    with shelve.open(CONFIG_FILE, writeback=True) as config:
+        if "file_versions" not in config:
+            config["file_versions"] = {}
+        config["file_versions"][file_path] = content
+
+def get_file_version(file_path: str) -> Optional[str]:
+    with shelve.open(CONFIG_FILE) as config:
+        return config.get("file_versions", {}).get(file_path)
+
+def clear_file_versions():
+    with shelve.open(CONFIG_FILE, writeback=True) as config:
+        if "file_versions" in config:
+            del config["file_versions"]
+            
 def init_config():
     if not get_config():
         set_config("llm_provider", "anthropic")

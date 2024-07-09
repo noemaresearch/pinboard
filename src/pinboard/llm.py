@@ -1,10 +1,11 @@
 import os
 import json
+import re
 from typing import Dict, List, Union
 from anthropic import Anthropic
 import typer
 from rich.console import Console
-from .config import get_llm_config
+from .config import get_llm_config, store_last_operation, store_file_version, clear_file_versions
 from .file import update_file, add_new_file, get_all_files_in_directory, is_valid_file, remove_file
 from .pin import get_pinned_items, remove_pins
 from .term import get_term_content
@@ -48,7 +49,7 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
                      "1. For codebase changes, use <artifactEdit> tags with 'identifier', 'from', and 'to' attributes. For complete file rewrites, 'from' should be \"1\" and 'to' should be the last line number.\n"
                      "2. Both the 'from' and 'to' indices are inclusive. Set 'from' to exactly the first line of the intended edit, and 'to' to exactly the last edited line. Mind the newlines. The two indices my coincide for a single line being overwritten (e.g. 3-3) with zero, one, or more lines.\n"
                      "3. For genuinely new files that haven't existed before at all, use <artifactEdit> tags with only the 'identifier' attribute. Only skip 'from' and 'to' when the file doesn't exist. Otherwise, attempt edits between 'from' and 'to' line lumbers.\n"
-                     "4. Use valid, absolute file paths as identifiers.\n"
+                     "4. Make sure to only use correct, absolute file paths as identifiers.\n"
                      "5. Provide only the changed content within the <artifactEdit> tags.\n"
                      "6. Do NOT include line numbers (e.g. '1.') between <artifactEdit> </artifactEdit> tags child content, not even for newly created files. The line numbers are only meant to help you identify which lines to edit, and are not actually part of the pinned files.\n"
                      "7. To remove lines, provide no content within the <artifactEdit> tags.\n"
@@ -86,31 +87,39 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
     )
 
     content = response.content[0].text if response.content else ""
-    
     if "<artifactEdit" in content:
         edited_files = parse_llm_response(content)
+        last_operation = {"edited_files": {}}
+        clear_file_versions()
+        
         for file_path, edits in edited_files.items():
             if file_path.endswith("@tmux"):
                 print_info(f"Skipping read-only term object: {file_path}")
             elif isinstance(edits, list):
                 file_content = get_file_content(file_path)
+                store_file_version(file_path, file_content)
                 updated_content = apply_edits(file_content, edits)
                 if updated_content.strip() == "":
                     remove_file(file_path)
                     print_file_change("Removed", file_path)
+                    last_operation["edited_files"][file_path] = "removed"
                 else:
                     update_file(file_path, updated_content)
                     for edit in edits:
                         print_file_change("Updated", file_path, edit["from"], edit["to"])
+                    last_operation["edited_files"][file_path] = "updated"
             elif isinstance(edits, str):  # New file
                 add_new_file(file_path, edits)
                 print_file_change("Added", file_path)
+                last_operation["edited_files"][file_path] = "added"
         
+        store_last_operation(last_operation)
         if not edited_files:
             print_info("No files were edited, added, or removed.")
         
         # Generate a summary of file changes for the chat history
         file_change_summary = generate_file_change_summary(edited_files)
+        
         return content, file_change_summary
     else:
         return content, None
