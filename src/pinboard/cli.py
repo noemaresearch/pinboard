@@ -136,6 +136,8 @@ def execute_pin_command(command: str):
             print_error("Please provide a model name for the llm command.")
     elif cmd == "ls":
         ls()
+    elif cmd == "undo":
+        undo()
     else:
         print_error(f"Unknown command: {cmd}")
 
@@ -172,15 +174,12 @@ def sh(
             if message.lower() == 'exit':
                 break
             
-            if message.split()[0] in ["add", "rm", "cp", "llm", "ls"]:
+            if message.split()[0] in ["add", "rm", "cp", "llm", "ls", "undo"]:
                 execute_pin_command(message)
             else:
-                response, file_change_summary = process_chat_message(message, clipboard_content, chat_history, interactive=True, verbose=verbose)
+                response = process_chat_message(message, clipboard_content, chat_history, interactive=True, verbose=verbose)
                 chat_history.append({"role": "user", "content": message})
-                if file_change_summary:
-                    chat_history.append({"role": "assistant", "content": file_change_summary})
-                else:
-                    chat_history.append({"role": "assistant", "content": response})
+                chat_history.append({"role": "assistant", "content": response})
             
             print()
     else:
@@ -194,6 +193,8 @@ def process_chat_message(message: str, clipboard_content: str = None, chat_histo
     if "<artifact" not in response or verbose:
         response = re.sub(r'<artifactEdit[^>]*>.*?</artifactEdit>', "...", response, flags=re.DOTALL)
         print(Panel(response, title="Response", title_align="left", expand=False, border_style="green"))
+        
+    return response
         
 @app.command()
 def undo():
