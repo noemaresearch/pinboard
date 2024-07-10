@@ -1,6 +1,8 @@
 import pyclip
 import re
+import os
 from typing import List, Dict, Union
+from .pin import get_pinned_items, get_unique_files
 
 def get_clipboard_content():
     return pyclip.paste().decode('utf-8')
@@ -18,17 +20,25 @@ def parse_llm_response(response: str) -> Dict[str, Union[str, List[Dict[str, Uni
     artifact_edit_pattern = r'<artifactEdit identifier="([^"]+)" from="(\d+)" to="(\d+)">(.*?)</artifactEdit>'
     new_file_pattern = r'<artifactEdit identifier="([^"]+)">(.*?)</artifactEdit>'
     
+    pinned_items = get_pinned_items()
+    pinned_files = get_unique_files(pinned_items)
+    pinned_folders = [item for item in pinned_items if os.path.isdir(item)]
+    
     artifact_edits = {}
     for identifier, from_line, to_line, content in re.findall(artifact_edit_pattern, response, re.DOTALL):
-        if identifier not in artifact_edits:
-            artifact_edits[identifier] = []
-        artifact_edits[identifier].append({
-            'from': int(from_line),
-            'to': int(to_line),
-            'content': content.strip("\n")
-        })
+        if identifier in pinned_files or any(identifier.startswith(folder) for folder in pinned_folders):
+            if identifier not in artifact_edits:
+                artifact_edits[identifier] = []
+            artifact_edits[identifier].append({
+                'from': int(from_line),
+                'to': int(to_line),
+                'content': content.strip("\n")
+            })
     
-    new_files = {identifier: content.strip() for identifier, content in re.findall(new_file_pattern, response, re.DOTALL)}
+    new_files = {}
+    for identifier, content in re.findall(new_file_pattern, response, re.DOTALL):
+        if any(identifier.startswith(folder) for folder in pinned_folders):
+            new_files[identifier] = content.strip()
     
     return {**artifact_edits, **new_files}
 

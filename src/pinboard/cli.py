@@ -30,7 +30,22 @@ def add(items: List[str] = typer.Argument(..., help="File or folder paths to add
 
     If a folder is added, all valid files within that folder (and its subfolders) will be included in the pinboard.
     """
-    added_count = add_pins(items)
+    valid_items = []
+    invalid_items = []
+
+    for item in items:
+        if item.endswith("@tmux"):
+            # For tmux sessions, we can't easily check if they exist, so we'll assume they're valid
+            valid_items.append(item)
+        elif os.path.exists(item):
+            valid_items.append(item)
+        else:
+            invalid_items.append(item)
+
+    if invalid_items:
+        print_error(f"The following items do not exist and cannot be added: {', '.join(invalid_items)}")
+
+    added_count = add_pins(valid_items)
     if added_count == 0:
         print_info("No new items added to the pinboard.")
     else:

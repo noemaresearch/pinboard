@@ -115,7 +115,7 @@ def chat(message: str, clipboard_content: str = None, chat_history: List[Dict[st
         
         store_last_operation(last_operation)
         if not edited_files:
-            print_info("No files were edited, added, or removed.")
+            print_info("No files were edited, added, or removed. Note that files can only be added in pinned directories, and that only pinned files or files in pinned directories can be edited or removed.")
         
         # Generate a summary of file changes for the chat history
         file_change_summary = generate_file_change_summary(edited_files)
