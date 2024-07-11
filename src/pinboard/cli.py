@@ -217,7 +217,8 @@ def process_chat_message(message: str, clipboard_content: str = None, chat_histo
 def succeed(
     command: str = typer.Argument(..., help="Shell command to execute"),
     tail: int = typer.Option(20, "--tail", "-t", help="Number of lines to capture from command output"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show full response from the language model")
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show full response from the language model"),
+    max_tries: int = typer.Option(None, "--max-tries", "-m", help="Maximum number of edit attempts before giving up")
 ):
     """
     Execute a shell command and use the LLM to fix any errors until the command succeeds.
@@ -230,12 +231,17 @@ def succeed(
         command: The shell command to execute.
         tail: Number of lines to capture from command output (default: 20).
         verbose: Show full response from the language model.
+        max_tries: Maximum number of edit attempts before giving up (default: None, meaning unlimited).
     """
     print_info(f"Executing command: {command}")
     exit_code, output = run_command(command, tail)
     iteration = 1
 
     while exit_code != 0:
+        if max_tries is not None and iteration > max_tries:
+            print_error(f"Reached maximum number of tries ({max_tries}). Aborting.")
+            break
+
         print_error(f"Command failed with exit code {exit_code}. Iteration {iteration}.")
         if output.strip():
             print(Panel(output, title=f"Last {tail} lines of output", title_align="left", expand=False, border_style="yellow"))

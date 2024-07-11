@@ -219,6 +219,7 @@ $ pin succeed [OPTIONS] COMMAND
 
 * `-t, --tail INTEGER`: Number of lines to capture from command output  [default: 20]
 * `-v, --verbose`: Show full response from the language model
+* `-m, --max-tries INTEGER`: Maximum number of edit attempts before giving up
 * `--help`: Show this message and exit.
 
 ## `pin undo`
