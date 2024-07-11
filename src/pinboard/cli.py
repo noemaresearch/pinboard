@@ -215,7 +215,7 @@ def process_chat_message(message: str, clipboard_content: str = None, chat_histo
         
 @app.command()
 def succeed(
-    command: str = typer.Argument(..., help="Shell command to execute"),
+    command: str = typer.Argument(..., help="Shell command to execute (supports composite commands)"),
     tail: int = typer.Option(20, "--tail", "-t", help="Number of lines to capture from command output"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show full response from the language model"),
     max_tries: int = typer.Option(None, "--max-tries", "-m", help="Maximum number of edit attempts before giving up")
@@ -227,8 +227,10 @@ def succeed(
     make changes to the pinned files until the command succeeds (returns exit code 0).
     The process is iterative and can be undone in one go.
 
+    Supports composite commands and shell operators (e.g., 'echo hello && echo world' or 'command1; command2').
+
     Args:
-        command: The shell command to execute.
+        command: The shell command to execute (can include multiple commands and operators).
         tail: Number of lines to capture from command output (default: 20).
         verbose: Show full response from the language model.
         max_tries: Maximum number of edit attempts before giving up (default: None, meaning unlimited).

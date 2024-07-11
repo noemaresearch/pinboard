@@ -15,7 +15,8 @@ def run_command(command: str, tail: int = 20) -> Tuple[int, str]:
     """
     try:
         process = subprocess.Popen(
-            shlex.split(command),
+            command,
+            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
