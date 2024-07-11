@@ -1,3 +1,5 @@
+from pinboard.shell import run_command
+from .config import get_succeed_operations, clear_succeed_operations
 import re
 import typer
 import os
@@ -15,7 +17,7 @@ from .config import set_llm_config, get_last_operation, get_file_version, clear_
 from .utils import get_clipboard_content
 from .format import print_success, print_error, print_info, print_file_change
 from .file import update_file, remove_file
-from .llm import chat as llm_chat
+from .llm import chat as llm_chat, succeed_chat
 
 app = typer.Typer()
 console = Console()
@@ -212,44 +214,105 @@ def process_chat_message(message: str, clipboard_content: str = None, chat_histo
     return response
         
 @app.command()
+def succeed(
+    command: str = typer.Argument(..., help="Shell command to execute"),
+    tail: int = typer.Option(20, "--tail", "-t", help="Number of lines to capture from command output"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show full response from the language model")
+):
+    """
+    Execute a shell command and use the LLM to fix any errors until the command succeeds.
+
+    This command runs the specified shell command and, if it fails, uses the AI assistant to
+    make changes to the pinned files until the command succeeds (returns exit code 0).
+    The process is iterative and can be undone in one go.
+
+    Args:
+        command: The shell command to execute.
+        tail: Number of lines to capture from command output (default: 20).
+        verbose: Show full response from the language model.
+    """
+    print_info(f"Executing command: {command}")
+    exit_code, output = run_command(command, tail)
+    iteration = 1
+
+    while exit_code != 0:
+        print_error(f"Command failed with exit code {exit_code}. Iteration {iteration}.")
+        if output.strip():
+            print(Panel(output, title=f"Last {tail} lines of output", title_align="left", expand=False, border_style="yellow"))
+
+        response, file_changes = succeed_chat(command, output, verbose=verbose)
+        
+        if not file_changes:
+            print_error("The language model couldn't make any changes. Aborting.")
+            break
+
+        print_info(f"Executing command: {command}")
+        exit_code, output = run_command(command, tail)
+        iteration += 1
+
+    if exit_code == 0:
+        print_success(f"Command succeeded after {iteration} iterations.")
+    else:
+        print_error(f"Command failed after {iteration} iterations. Unable to fix the issue.")
+
+@app.command()
 def undo():
     """
-    Undo the last file changes made by the 'pin sh' command.
+    Undo the last file changes made by the 'pin sh' or 'pin succeed' commands.
 
-    This command reverts the added, updated, or removed files based on the last 'pin sh' operation.
+    This command reverts the added, updated, or removed files based on the last 'pin sh' or 'pin succeed' operation.
     It only undoes the most recent changes and cannot perform multiple undos.
     """
     last_operation = get_last_operation()
+    succeed_operations = get_succeed_operations()
 
-    if not last_operation:
+    if succeed_operations:
+        for operation in reversed(succeed_operations):
+            for file_path, action in operation.get("edited_files", {}).items():
+                print_info(f"Undoing action '{action}' for file: {file_path}")
+                if action == "added":
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                        print_file_change("Removed", file_path)
+                    else:
+                        print_error(f"File not found: {file_path}")
+                elif action in ["updated", "removed"]:
+                    previous_content = get_file_version(file_path)
+                    if previous_content is not None:
+                        update_file(file_path, previous_content)
+                        print_file_change("Restored", file_path)
+                    else:
+                        print_error(f"No previous version found for: {file_path}")
+        clear_succeed_operations()
+        print_success("Undo operation for 'pin succeed' completed.")
+    elif last_operation:
+        edited_files = last_operation.get("edited_files", {})
+        if not edited_files:
+            print_info("No files were affected in the last operation.")
+            return
+
+        print_info(f"Files affected in the last operation: {', '.join(edited_files.keys())}")
+
+        for file_path, action in edited_files.items():
+            print_info(f"Undoing action '{action}' for file: {file_path}")
+            if action == "added":
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    print_file_change("Removed", file_path)
+                else:
+                    print_error(f"File not found: {file_path}")
+            elif action in ["updated", "removed"]:
+                previous_content = get_file_version(file_path)
+                if previous_content is not None:
+                    update_file(file_path, previous_content)
+                    print_file_change("Restored", file_path)
+                else:
+                    print_error(f"No previous version found for: {file_path}")
+
+        clear_last_operation()
+        print_success("Undo operation for 'pin sh' completed.")
+    else:
         print_error("No previous operation to undo.")
-        return
-
-    edited_files = last_operation.get("edited_files", {})
-    if not edited_files:
-        print_info("No files were affected in the last operation.")
-        return
-
-    print_info(f"Files affected in the last operation: {', '.join(edited_files.keys())}")
-
-    for file_path, action in edited_files.items():
-        print_info(f"Undoing action '{action}' for file: {file_path}")
-        if action == "added":
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                print_file_change("Removed", file_path)
-            else:
-                print_error(f"File not found: {file_path}")
-        elif action in ["updated", "removed"]:
-            previous_content = get_file_version(file_path)
-            if previous_content is not None:
-                update_file(file_path, previous_content)
-                print_file_change("Restored", file_path)
-            else:
-                print_error(f"No previous version found for: {file_path}")
-
-    clear_last_operation()
-    print_success("Undo operation completed.")
 
 if __name__ == "__main__":
     app()

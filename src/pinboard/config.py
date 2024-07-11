@@ -1,7 +1,7 @@
 import shelve
 import os
 from platformdirs import user_config_dir
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 CONFIG_DIR = user_config_dir("pinboard")
 CONFIG_FILE = f"{CONFIG_DIR}/config"
@@ -67,6 +67,21 @@ def init_config():
     if not get_config():
         set_config("llm_provider", "anthropic")
         set_config("llm_model", "claude-3-5-sonnet-20240620")
+
+def store_succeed_operation(operation_data: Dict[str, Any]):
+    with shelve.open(CONFIG_FILE, writeback=True) as config:
+        if "succeed_operations" not in config:
+            config["succeed_operations"] = []
+        config["succeed_operations"].append(operation_data)
+
+def get_succeed_operations() -> List[Dict[str, Any]]:
+    with shelve.open(CONFIG_FILE) as config:
+        return config.get("succeed_operations", [])
+
+def clear_succeed_operations():
+    with shelve.open(CONFIG_FILE, writeback=True) as config:
+        if "succeed_operations" in config:
+            del config["succeed_operations"]
 
 # Initialize config on import
 init_config()

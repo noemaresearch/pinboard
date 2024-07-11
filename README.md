@@ -12,6 +12,8 @@ Pinboard is a command-line tool for managing file references when working with r
 
 ![](/media/interactive.png)
 
+![](/media/succeed.png)
+
 ## Installation
 
 1. Ensure Python 3.8 or later is installed.
@@ -55,6 +57,7 @@ $ pin [OPTIONS] COMMAND [ARGS]...
 * `ls`: List all pinned files, folders, and tmux...
 * `rm`: Remove specified items from the pinboard...
 * `sh`: Start an interactive shell or send a...
+* `succeed`: Execute a shell command and use the LLM...
 * `undo`: Undo the last file changes made by the...
 
 ## `pin add`
@@ -194,11 +197,35 @@ $ pin sh [OPTIONS] [MESSAGE]
 * `-v, --verbose`: Show full response from the language model
 * `--help`: Show this message and exit.
 
+## `pin succeed`
+
+Execute a shell command and use the LLM to fix any errors until the command succeeds.
+
+This command runs the specified shell command and, if it fails, uses the AI assistant to
+make changes to the pinned files until the command succeeds (returns exit code 0).
+The process is iterative and can be undone in one go.
+
+**Usage**:
+
+```console
+$ pin succeed [OPTIONS] COMMAND
+```
+
+**Arguments**:
+
+* `COMMAND`: Shell command to execute  [required]
+
+**Options**:
+
+* `-t, --tail INTEGER`: Number of lines to capture from command output  [default: 20]
+* `-v, --verbose`: Show full response from the language model
+* `--help`: Show this message and exit.
+
 ## `pin undo`
 
-Undo the last file changes made by the 'pin sh' command.
+Undo the last file changes made by the 'pin sh' or 'pin succeed' commands.
 
-This command reverts the added, updated, or removed files based on the last 'pin sh' operation.
+This command reverts the added, updated, or removed files based on the last 'pin sh' or 'pin succeed' operation.
 It only undoes the most recent changes and cannot perform multiple undos.
 
 **Usage**:
