@@ -25,7 +25,6 @@ def run_command(command: str, tail: int = 20) -> Tuple[int, str]:
         
         output_lines = []
         for line in process.stdout:
-            print(line, end='')  # Print output in real-time
             output_lines.append(line)
         
         process.wait()
