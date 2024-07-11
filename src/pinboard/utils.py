@@ -37,7 +37,7 @@ def parse_llm_response(response: str) -> Dict[str, Union[str, List[Dict[str, Uni
     
     new_files = {}
     for identifier, content in re.findall(new_file_pattern, response, re.DOTALL):
-        if any(identifier.startswith(folder) for folder in pinned_folders):
+        if identifier in pinned_files or any(identifier.startswith(folder) for folder in pinned_folders):
             new_files[identifier] = content.strip()
     
     return {**artifact_edits, **new_files}
